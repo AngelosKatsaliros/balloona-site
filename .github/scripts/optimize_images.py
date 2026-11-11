@@ -2,7 +2,7 @@
 
 - Resizes photos larger than MAX_SIDE pixels and re-saves them compressed.
 - Fixes phone rotation (EXIF orientation).
-- Converts iPhone HEIC photos to JPG and updates the references in _data/*.yml.
+- Converts iPhone HEIC photos to JPG and updates the references in _data/*.json.
 
 Usage: python optimize_images.py <file> [<file> ...]
 """
@@ -25,7 +25,7 @@ DATA_DIR = Path("_data")
 
 
 def replace_reference(old: Path, new: Path) -> None:
-    for yml in DATA_DIR.glob("*.yml"):
+    for yml in DATA_DIR.glob("*.json"):
         text = yml.read_text(encoding="utf-8")
         updated = text.replace(old.as_posix(), new.as_posix())
         if updated != text:

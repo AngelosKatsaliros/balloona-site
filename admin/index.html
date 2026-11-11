@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Διαχείριση | Balloona</title>
+<link rel="icon" href="../images/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600&family=Great+Vibes&family=Noto+Serif+Display:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+<header class="bar">
+  <div class="wrap bar-inner">
+    <a class="brand" href="../" title="Άνοιγμα του site">
+      <img src="../images/logo.png" alt="" width="40" height="40">
+      <span><span class="brand-name">Balloona</span><span class="brand-sub">Διαχείριση φωτογραφιών</span></span>
+    </a>
+    <div class="bar-actions">
+      <a class="link" href="../" target="_blank" rel="noopener">Δες το site ↗</a>
+      <button class="link" id="logout" hidden>Αποσύνδεση</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- Not configured -->
+  <section id="view-setup" class="card narrow" hidden>
+    <h1>Η διαχείριση δεν έχει ρυθμιστεί ακόμη</h1>
+    <p>Λείπει η διεύθυνση του server στο αρχείο <code>admin/config.js</code>.</p>
+  </section>
+
+  <!-- Login -->
+  <section id="view-login" class="card narrow" hidden>
+    <h1>Σύνδεση</h1>
+    <p class="muted">Γράψε τον κωδικό διαχείρισης για να αλλάξεις τις φωτογραφίες του site.</p>
+    <form id="login-form">
+      <label class="field">
+        <span>Κωδικός</span>
+        <input type="password" id="password" autocomplete="current-password" required>
+      </label>
+      <button class="btn" type="submit">Σύνδεση</button>
+      <p class="error" id="login-error" role="alert"></p>
+    </form>
+  </section>
+
+  <!-- App -->
+  <section id="view-app" hidden>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="gallery" aria-selected="true">Δημιουργίες</button>
+      <button class="tab" role="tab" data-tab="home" aria-selected="false">Αρχική σελίδα</button>
+    </nav>
+
+    <div id="tab-gallery">
+      <div class="card">
+        <h2>Νέα φωτογραφία</h2>
+        <form id="add-form" class="add-grid">
+          <label class="drop" id="drop">
+            <input type="file" id="add-file" accept="image/*">
+            <img id="add-preview" alt="" hidden>
+            <span id="drop-text"><strong>Πάτα για να διαλέξεις φωτογραφία</strong><br><small>ή σύρε την εδώ</small></span>
+          </label>
+          <div class="add-fields">
+            <label class="field">
+              <span>Τίτλος</span>
+              <input id="add-title" maxlength="80" placeholder="π.χ. Bobo μπαλόνι με όνομα" required>
+            </label>
+            <label class="field">
+              <span>Κατηγορία</span>
+              <select id="add-category" required>
+                <option value="">Διάλεξε…</option>
+              </select>
+            </label>
+            <button class="btn" type="submit" id="add-btn">Ανέβασμα στο site</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="list-head">
+          <h2>Φωτογραφίες στη σελίδα «Δημιουργίες»</h2>
+          <span class="muted" id="count"></span>
+        </div>
+        <p class="muted small">Η πρώτη φωτογραφία της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια.</p>
+        <ul class="list" id="list"></ul>
+      </div>
+    </div>
+
+    <div id="tab-home" hidden>
+      <div class="card">
+        <h2>Φωτογραφίες αρχικής σελίδας</h2>
+        <p class="muted small">Πάτα «Αλλαγή» και διάλεξε νέα φωτογραφία. Αποθηκεύεται αμέσως.</p>
+        <div class="home-grid" id="home-grid"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="savebar" id="savebar" hidden>
+  <div class="wrap savebar-inner">
+    <span>Έχεις αλλαγές που δεν αποθηκεύτηκαν.</span>
+    <div>
+      <button class="btn ghost" id="discard">Ακύρωση</button>
+      <button class="btn" id="save">Αποθήκευση</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="config.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>

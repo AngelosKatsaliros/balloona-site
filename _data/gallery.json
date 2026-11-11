@@ -1,0 +1,32 @@
+[
+  {
+    "image": "/images/uploads/gift.jpg",
+    "title": "Bobo με όνομα",
+    "category": "dora"
+  },
+  {
+    "image": "/images/uploads/hero.jpg",
+    "title": "«Χρόνια Πολλά!» με αρκουδάκι",
+    "category": "genethlia"
+  },
+  {
+    "image": "/images/uploads/birthday.jpg",
+    "title": "Πρώτα γενέθλια",
+    "category": "genethlia"
+  },
+  {
+    "image": "/images/uploads/baptism.jpg",
+    "title": "Αψίδα βάπτισης",
+    "category": "vaptiseis"
+  },
+  {
+    "image": "/images/uploads/about.jpg",
+    "title": "Χειροποίητο δώρο-έκπληξη",
+    "category": "dora"
+  },
+  {
+    "image": "/images/uploads/baptism.jpg",
+    "title": "Στολισμός εκκλησίας",
+    "category": "vaptiseis"
+  }
+]
