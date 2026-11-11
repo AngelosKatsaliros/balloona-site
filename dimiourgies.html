@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="el">
 <head>
@@ -11,7 +13,7 @@
 <meta property="og:site_name" content="Balloona">
 <meta property="og:title" content="Δημιουργίες | Balloona">
 <meta property="og:description" content="Δείτε τις δημιουργίες της Balloona: προσωποποιημένα bobo μπαλόνια, δώρα, στολισμοί γενεθλίων και βαπτίσεων.">
-<meta property="og:image" content="https://balloona.gr/images/hero.jpg">
+<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fbf3ee">
 <link rel="icon" href="images/logo.png">
@@ -60,12 +62,10 @@
       <button class="filter" data-filter="vaptiseis" id="vaptiseis">Βαπτίσεις &amp; εκδηλώσεις</button>
     </div>
     <div class="gallery">
-      <figure data-cat="dora"><img src="images/gift.jpg" alt="Bobo με όνομα" loading="lazy"><figcaption>Bobo με όνομα<small>Προσωποποιημένα δώρα</small></figcaption></figure>
-      <figure data-cat="genethlia"><img src="images/hero.jpg" alt="«Χρόνια Πολλά!» με αρκουδάκι" loading="lazy"><figcaption>«Χρόνια Πολλά!» με αρκουδάκι<small>Γενέθλια</small></figcaption></figure>
-      <figure data-cat="genethlia"><img src="images/birthday.jpg" alt="Πρώτα γενέθλια" loading="lazy"><figcaption>Πρώτα γενέθλια<small>Γενέθλια</small></figcaption></figure>
-      <figure data-cat="vaptiseis"><img src="images/baptism.jpg" alt="Αψίδα βάπτισης" loading="lazy"><figcaption>Αψίδα βάπτισης<small>Βαπτίσεις & εκδηλώσεις</small></figcaption></figure>
-      <figure data-cat="dora"><img src="images/about.jpg" alt="Χειροποίητο δώρο-έκπληξη" loading="lazy"><figcaption>Χειροποίητο δώρο-έκπληξη<small>Προσωποποιημένα δώρα</small></figcaption></figure>
-      <figure data-cat="vaptiseis"><img src="images/baptism.jpg" alt="Στολισμός εκκλησίας" loading="lazy"><figcaption>Στολισμός εκκλησίας<small>Βαπτίσεις & εκδηλώσεις</small></figcaption></figure>
+{% assign photos = site.data.gallery | reverse %}
+{% for p in photos %}{% if p.image %}
+      <figure data-cat="{{ p.category }}"><img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy"><figcaption>{{ p.title | escape }}<small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption></figure>
+{% endif %}{% endfor %}
     </div>
   </div>
 </section>

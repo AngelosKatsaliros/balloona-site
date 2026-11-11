@@ -1,0 +1,64 @@
+name: Optimize uploaded photos
+
+on:
+  push:
+    branches: [main]
+    paths: ["images/uploads/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: optimize-images
+  cancel-in-progress: false
+
+jobs:
+  optimize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Pillow
+        run: pip install pillow pillow-heif
+
+      - name: Resize new photos
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            mapfile -t files < <(git diff --name-only --diff-filter=AM "$BEFORE" HEAD -- images/uploads)
+          else
+            files=()
+          fi
+          python .github/scripts/optimize_images.py "${files[@]}"
+
+      - name: Commit smaller photos
+        id: commit
+        run: |
+          git add -A images/uploads _data
+          if git diff --cached --quiet; then
+            echo "Nothing to optimize."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Optimize uploaded photos"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Rebuild the site with the smaller photos
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || echo "Pages will rebuild on the next change."

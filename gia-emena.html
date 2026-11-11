@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="el">
 <head>
@@ -11,7 +13,7 @@
 <meta property="og:site_name" content="Balloona">
 <meta property="og:title" content="Για εμένα | Balloona">
 <meta property="og:description" content="Γνωρίστε την Ελισάβετ, τη δημιουργό της Balloona: παιδαγωγός με αγάπη για τη δημιουργικότητα και τα προσωποποιημένα μπαλόνια.">
-<meta property="og:image" content="https://balloona.gr/images/hero.jpg">
+<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fbf3ee">
 <link rel="icon" href="images/logo.png">
@@ -54,7 +56,7 @@
 <section>
   <div class="container">
     <div class="about">
-      <div class="about-img"><img src="images/about.jpg" alt="Η Ελισάβετ δένει κορδέλα σε bobo μπαλόνι" loading="lazy"></div>
+      <div class="about-img"><img src="{% include src.html path=site.data.home.about %}" alt="Η Ελισάβετ στο εργαστήριο της Balloona" loading="lazy"></div>
       <div class="about-text">
         <p>Είμαι παιδαγωγός και η δημιουργικότητα και η φαντασία είναι αναπόσπαστο κομμάτι της ζωής μου! Αγαπώ να δίνω μορφή σε μικρές ιδέες και να δημιουργώ πράγματα που φέρνουν χαμόγελα.</p>
         <p>Κάπως έτσι ξεκίνησα να φτιάχνω προσωποποιημένα bobo μπαλόνια και γεννήθηκε η Balloona: από την επιθυμία μου να μετατρέπω τη φαντασία σε ξεχωριστά δώρα, γεμάτα αγάπη και φροντίδα.</p>

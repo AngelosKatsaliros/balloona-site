@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="el">
 <head>
@@ -11,7 +13,7 @@
 <meta property="og:site_name" content="Balloona">
 <meta property="og:title" content="Balloona | Προσωποποιημένα μπαλόνια & στολισμοί">
 <meta property="og:description" content="Balloona – Luxury balloon creations. Προσωποποιημένα bobo μπαλόνια, δώρα και στολισμοί για γενέθλια, βαπτίσεις και εκδηλώσεις.">
-<meta property="og:image" content="https://balloona.gr/images/hero.jpg">
+<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fbf3ee">
 <link rel="icon" href="images/logo.png">
@@ -55,7 +57,7 @@
       </div>
     </div>
   </div>
-  <div class="hero-media"><img src="images/hero.jpg" alt="Διάφανο bobo μπαλόνι με αρκουδάκι, ροζ κορδέλα και ευχή «Χρόνια Πολλά!»" fetchpriority="high"></div>
+  <div class="hero-media"><img src="{% include src.html path=site.data.home.hero %}" alt="Δημιουργία Balloona με μπαλόνια" fetchpriority="high"></div>
 </section>
 
 <section>
@@ -63,15 +65,15 @@
     <h2 class="section-title">Δημιουργίες για κάθε περίσταση</h2>
     <div class="cards">
       <a class="card" href="dimiourgies.html#dora">
-        <img src="images/gift.jpg" alt="Bobo μπαλόνι με αρκουδάκι και το όνομα «Μαρία»" loading="lazy">
+        <img src="{% include src.html path=site.data.home.gift %}" alt="Προσωποποιημένα δώρα" loading="lazy">
         <h3>Προσωποποιημένα δώρα</h3>
       </a>
       <a class="card" href="dimiourgies.html#genethlia">
-        <img src="images/birthday.jpg" alt="Στολισμός πρώτων γενεθλίων με μπαλόνι αριθμό 1" loading="lazy">
+        <img src="{% include src.html path=site.data.home.birthday %}" alt="Στολισμός γενεθλίων" loading="lazy">
         <h3>Γενέθλια</h3>
       </a>
       <a class="card" href="dimiourgies.html#vaptiseis">
-        <img src="images/baptism.jpg" alt="Αψίδα από μπαλόνια και λουλούδια για βάπτιση" loading="lazy">
+        <img src="{% include src.html path=site.data.home.baptism %}" alt="Στολισμός βάπτισης" loading="lazy">
         <h3>Βαπτίσεις &amp; εκδηλώσεις</h3>
       </a>
     </div>
@@ -82,7 +84,7 @@
   <div class="container">
     <h2 class="section-title">Λίγα λόγια για εμένα</h2>
     <div class="about">
-      <div class="about-img"><img src="images/about.jpg" alt="Η Ελισάβετ δένει κορδέλα σε bobo μπαλόνι με αρκουδάκι" loading="lazy"></div>
+      <div class="about-img"><img src="{% include src.html path=site.data.home.about %}" alt="Η Ελισάβετ στο εργαστήριο της Balloona" loading="lazy"></div>
       <div class="about-text">
         <p>Είμαι παιδαγωγός και η δημιουργικότητα και η φαντασία είναι αναπόσπαστο κομμάτι της ζωής μου! Αγαπώ να δίνω μορφή σε μικρές ιδέες και να δημιουργώ πράγματα που φέρνουν χαμόγελα.</p>
         <p>Κάπως έτσι ξεκίνησα να φτιάχνω προσωποποιημένα bobo μπαλόνια και γεννήθηκε η Balloona: από την επιθυμία μου να μετατρέπω τη φαντασία σε ξεχωριστά δώρα, γεμάτα αγάπη και φροντίδα.</p>

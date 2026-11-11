@@ -1,3 +1,5 @@
+---
+---
 <!doctype html>
 <html lang="el">
 <head>
@@ -11,7 +13,7 @@
 <meta property="og:site_name" content="Balloona">
 <meta property="og:title" content="Στολισμοί | Balloona">
 <meta property="og:description" content="Στολισμοί με μπαλόνια για γενέθλια, βαπτίσεις, baby showers και εκδηλώσεις. Ζητήστε προσφορά από τη Balloona.">
-<meta property="og:image" content="https://balloona.gr/images/hero.jpg">
+<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fbf3ee">
 <link rel="icon" href="images/logo.png">
@@ -54,7 +56,7 @@
 <section>
   <div class="container services">
     <article class="service">
-      <div class="service-img"><img src="images/birthday.jpg" alt="Στολισμός γενεθλίων" loading="lazy"></div>
+      <div class="service-img"><img src="{% include src.html path=site.data.home.birthday %}" alt="Στολισμός γενεθλίων" loading="lazy"></div>
       <div>
         <h2>Γενέθλια</h2>
         <p>Παιδικά ή ενήλικα γενέθλια, με μπαλόνια-αριθμούς, γιρλάντες και θεματικό στήσιμο στα χρώματα που αγαπάτε.</p>
@@ -63,7 +65,7 @@
       </div>
     </article>
     <article class="service">
-      <div class="service-img"><img src="images/baptism.jpg" alt="Στολισμός βάπτισης" loading="lazy"></div>
+      <div class="service-img"><img src="{% include src.html path=site.data.home.baptism %}" alt="Στολισμός βάπτισης" loading="lazy"></div>
       <div>
         <h2>Βαπτίσεις &amp; εκδηλώσεις</h2>
         <p>Κομψοί, απαλοί στολισμοί για βαπτίσεις, αρραβώνες, baby showers και εταιρικές εκδηλώσεις.</p>
@@ -72,7 +74,7 @@
       </div>
     </article>
     <article class="service">
-      <div class="service-img"><img src="images/gift.jpg" alt="Προσωποποιημένο bobo μπαλόνι" loading="lazy"></div>
+      <div class="service-img"><img src="{% include src.html path=site.data.home.gift %}" alt="Προσωποποιημένο bobo μπαλόνι" loading="lazy"></div>
       <div>
         <h2>Προσωποποιημένα bobo μπαλόνια</h2>
         <p>Διάφανα μπαλόνια με όνομα, ευχή, αρκουδάκι ή μικρά δώρα μέσα, έτοιμα να χαρίσουν χαμόγελα.</p>

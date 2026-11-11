@@ -19,3 +19,13 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
    in `epikoinonia.html`. Until then the form shows a message pointing visitors to Instagram.
 4. **Domain:** if the domain is not `balloona.gr`, update the `canonical`/`og:` URLs at the top of each page.
 5. **Hosting:** drag the folder into Netlify Drop (app.netlify.com/drop), or push it to GitHub Pages / Vercel.
+
+## Editing photos without code (Pages CMS)
+- Photos are listed in `_data/gallery.yml` (Δημιουργίες page) and `_data/home.yml` (home page and Στολισμοί).
+  GitHub Pages builds the pages from these lists with Jekyll.
+- `.pages.yml` configures [Pages CMS](https://app.pagescms.org), a free browser editor for these lists.
+  Uploaded photos go to `images/uploads/`.
+- `.github/workflows/optimize-images.yml` automatically shrinks new photos (max 1800px, compressed JPG)
+  and converts iPhone HEIC photos to JPG.
+- Guide for editors (in Greek): `ODHGOS.md`.
+- Preview locally: `jekyll serve` (plain `index.html` in a browser no longer shows the photos, because the pages are now templates).
