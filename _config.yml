@@ -4,6 +4,5 @@ url: "https://angeloskatsaliros.github.io"
 baseurl: "/balloona-site"
 exclude:
   - README.md
-  - ODHGOS.md
   - .pages.yml
   - .github

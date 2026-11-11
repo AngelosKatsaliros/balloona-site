@@ -27,5 +27,4 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
   Uploaded photos go to `images/uploads/`.
 - `.github/workflows/optimize-images.yml` automatically shrinks new photos (max 1800px, compressed JPG)
   and converts iPhone HEIC photos to JPG.
-- Guide for editors (in Greek): `ODHGOS.md`.
 - Preview locally: `jekyll serve` (plain `index.html` in a browser no longer shows the photos, because the pages are now templates).
