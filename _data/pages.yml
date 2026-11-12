@@ -1,16 +1,21 @@
-# The same page in each language (used for menus and the ΕΛ / EN switch)
+# The same page in each language (used for menus and the ΕΛ / EN / DE switch)
 home:
   el: /
   en: /en/
+  de: /de/
 creations:
   el: /dimiourgies.html
   en: /en/creations.html
+  de: /de/kreationen.html
 decorations:
   el: /stolismoi.html
   en: /en/decorations.html
+  de: /de/dekorationen.html
 about:
   el: /gia-emena.html
   en: /en/about.html
+  de: /de/ueber-mich.html
 contact:
   el: /epikoinonia.html
   en: /en/contact.html
+  de: /de/kontakt.html

@@ -86,7 +86,7 @@
               <small class="muted">Επικόλλησε τον σύνδεσμο της ανάρτησης (Κοινοποίηση → Αντιγραφή συνδέσμου). Στο site βγαίνει κουμπί «Δείτε το βίντεο στο TikTok» ή «…στο Instagram».</small>
             </label>
             <details class="en-box" id="add-en">
-              <summary>Στα αγγλικά <small>(προαιρετικό)</small></summary>
+              <summary>Μεταφράσεις <small>(αγγλικά, γερμανικά · προαιρετικό)</small></summary>
               <label class="field">
                 <span>Τίτλος στα αγγλικά</span>
                 <input id="add-title-en" maxlength="80" lang="en" placeholder="π.χ. Bobo balloon with a name">
@@ -95,7 +95,15 @@
                 <span>Περιγραφή στα αγγλικά</span>
                 <textarea id="add-description-en" maxlength="1500" rows="3" lang="en" placeholder="Π.χ. what is included, size, colours…"></textarea>
               </label>
-              <small class="muted">Φαίνονται στην αγγλική έκδοση του site. Ό,τι μείνει κενό, εκεί φαίνεται στα ελληνικά.</small>
+              <label class="field">
+                <span>Τίτλος στα γερμανικά</span>
+                <input id="add-title-de" maxlength="80" lang="de" placeholder="π.χ. Bobo-Ballon mit Namen">
+              </label>
+              <label class="field">
+                <span>Περιγραφή στα γερμανικά</span>
+                <textarea id="add-description-de" maxlength="1500" rows="3" lang="de" placeholder="Π.χ. was enthalten ist, Größe, Farben…"></textarea>
+              </label>
+              <small class="muted">Φαίνονται στην αγγλική και στη γερμανική έκδοση του site. Ό,τι μείνει κενό: στα γερμανικά φαίνεται το αγγλικό, κι αν λείπει κι αυτό, το ελληνικό.</small>
             </details>
             <p class="muted small" id="add-hint">Βίντεο έως 50 MB (περίπου 20–40 δευτερόλεπτα από κινητό).</p>
             <button class="btn" type="submit" id="add-btn">Ανέβασμα στο site</button>
@@ -110,7 +118,7 @@
         </div>
         <p class="muted small">Η πρώτη της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια. Η περιγραφή φαίνεται όταν κάποιος πατήσει τη φωτογραφία.</p>
         <p class="muted small">Στο κουτί με το 🔗 βάζεις, αν θέλεις, τον σύνδεσμο ενός βίντεο της δημιουργίας στο TikTok ή στο Instagram. Στο site εμφανίζεται κουμπί για να το δει ο επισκέπτης.</p>
-        <p class="muted small">Στο «Στα αγγλικά» κάθε δημιουργίας γράφεις, αν θέλεις, τίτλο και περιγραφή για την αγγλική έκδοση του site. Αν τα αφήσεις κενά, εκεί φαίνονται τα ελληνικά.</p>
+        <p class="muted small">Στις «Μεταφράσεις» κάθε δημιουργίας γράφεις, αν θέλεις, τίτλο και περιγραφή στα αγγλικά (EN) και στα γερμανικά (DE). Ό,τι μείνει κενό: στα γερμανικά φαίνεται το αγγλικό, κι αν λείπει κι αυτό, το ελληνικό.</p>
         <p class="muted small">Με το <strong>+ Προσθήκη</strong> κάτω από κάθε δημιουργία βάζεις κι άλλες φωτογραφίες ή βίντεο της (π.χ. από άλλη γωνία). Η «Κύρια» φαίνεται στη σελίδα· οι υπόλοιπες όταν την ανοίξει ο επισκέπτης.</p>
         <ul class="list" id="list"></ul>
       </div>
@@ -120,7 +128,7 @@
       <div class="card">
         <h2>Κατηγορίες</h2>
         <p class="muted small">Εμφανίζονται ως κουμπιά φίλτρου στη σελίδα «Δημιουργίες», με αυτή τη σειρά. Μια κατηγορία φαίνεται στο site μόλις έχει τουλάχιστον μία δημιουργία.</p>
-        <p class="muted small">Στο πεδίο <strong>EN</strong> γράφεις το όνομα για την αγγλική έκδοση του site (προαιρετικό· αν μείνει κενό, φαίνεται το ελληνικό).</p>
+        <p class="muted small">Στα πεδία <strong>EN</strong> και <strong>DE</strong> γράφεις το όνομα στα αγγλικά και στα γερμανικά (προαιρετικό· αν μείνει κενό, φαίνεται το αγγλικό ή το ελληνικό).</p>
         <ul class="list" id="cat-list"></ul>
         <form class="cat-add" id="cat-add">
           <input id="cat-new" maxlength="40" placeholder="Νέα κατηγορία, π.χ. Baby shower" aria-label="Όνομα νέας κατηγορίας">

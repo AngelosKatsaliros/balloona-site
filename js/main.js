@@ -1,30 +1,46 @@
 // Texts used by this script, in the page's language
-const EN = document.documentElement.lang === 'en';
-const T = EN ? {
-  of: 'of',
-  photo: 'Photo',
-  video: 'Video',
-  creation: 'Creation',
-  noDesc: 'Every creation is handmade, in the colours and with the name or wish you choose. Send us your idea!',
-  zoomTouch: 'Tap, or spread two fingers, to zoom.',
-  zoomMouse: 'Click the photo or use the mouse wheel to zoom.',
-  interested: (t) => `I'm interested in something like “${t}” from your creations.\n`,
-  notConnected: 'The form isn\u2019t connected yet. Please message us on Instagram @balloona.pop.',
-  thanks: 'Thank you! We\u2019ve received your request and will be in touch soon.',
-  failed: 'Something went wrong. Please try again or message us on Instagram.',
-} : {
-  of: 'από',
-  photo: 'Φωτογραφία',
-  video: 'Βίντεο',
-  creation: 'Δημιουργία',
-  noDesc: 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!',
-  zoomTouch: 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση.',
-  zoomMouse: 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση.',
-  interested: (t) => `Ενδιαφέρομαι για κάτι σαν «${t}» από τις Δημιουργίες.\n`,
-  notConnected: 'Η φόρμα δεν έχει συνδεθεί ακόμη. Στείλτε μας μήνυμα στο Instagram @balloona.pop.',
-  thanks: 'Ευχαριστούμε! Λάβαμε το αίτημά σας και θα επικοινωνήσουμε σύντομα.',
-  failed: 'Κάτι πήγε στραβά. Δοκιμάστε ξανά ή στείλτε μας μήνυμα στο Instagram.',
+const TEXTS = {
+  en: {
+    of: 'of',
+    photo: 'Photo',
+    video: 'Video',
+    creation: 'Creation',
+    noDesc: 'Every creation is handmade, in the colours and with the name or wish you choose. Send us your idea!',
+    zoomTouch: 'Tap, or spread two fingers, to zoom.',
+    zoomMouse: 'Click the photo or use the mouse wheel to zoom.',
+    interested: (t) => `I'm interested in something like “${t}” from your creations.\n`,
+    notConnected: 'The form isn\u2019t connected yet. Please message us on Instagram @balloona.pop.',
+    thanks: 'Thank you! We\u2019ve received your request and will be in touch soon.',
+    failed: 'Something went wrong. Please try again or message us on Instagram.',
+  },
+  de: {
+    of: 'von',
+    photo: 'Foto',
+    video: 'Video',
+    creation: 'Kreation',
+    noDesc: 'Jede Kreation wird von Hand gefertigt – in Ihren Wunschfarben und mit dem Namen oder Gruß Ihrer Wahl. Senden Sie uns Ihre Idee!',
+    zoomTouch: 'Zum Vergrößern tippen oder mit zwei Fingern aufziehen.',
+    zoomMouse: 'Zum Vergrößern auf das Foto klicken oder das Mausrad nutzen.',
+    interested: (t) => `Ich interessiere mich für etwas wie „${t}“ aus Ihren Kreationen.\n`,
+    notConnected: 'Das Formular ist noch nicht verbunden. Bitte schreiben Sie uns auf Instagram @balloona.pop.',
+    thanks: 'Vielen Dank! Wir haben Ihre Anfrage erhalten und melden uns in Kürze.',
+    failed: 'Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut oder schreiben Sie uns auf Instagram.',
+  },
+  el: {
+    of: 'από',
+    photo: 'Φωτογραφία',
+    video: 'Βίντεο',
+    creation: 'Δημιουργία',
+    noDesc: 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!',
+    zoomTouch: 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση.',
+    zoomMouse: 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση.',
+    interested: (t) => `Ενδιαφέρομαι για κάτι σαν «${t}» από τις Δημιουργίες.\n`,
+    notConnected: 'Η φόρμα δεν έχει συνδεθεί ακόμη. Στείλτε μας μήνυμα στο Instagram @balloona.pop.',
+    thanks: 'Ευχαριστούμε! Λάβαμε το αίτημά σας και θα επικοινωνήσουμε σύντομα.',
+    failed: 'Κάτι πήγε στραβά. Δοκιμάστε ξανά ή στείλτε μας μήνυμα στο Instagram.',
+  },
 };
+const T = TEXTS[document.documentElement.lang] || TEXTS.el;
 
 // Language switch: stay on the same category of the gallery
 document.querySelectorAll('.lang-switch a').forEach((a) => a.addEventListener('click', () => {

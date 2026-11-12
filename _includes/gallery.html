@@ -1,24 +1,28 @@
 {%- comment -%}
   The Δημιουργίες grid, its filters and the lightbox, in the page's language.
-  English pages use title_en / description_en / name_en when they are filled in, otherwise the Greek text.
+  Other languages use title_<lang> / description_<lang> / name_<lang> when filled in (e.g. title_de);
+  otherwise the English text, otherwise the Greek one.
   "social" is an optional link to a TikTok or Instagram post about the creation (button in the lightbox).
 {%- endcomment -%}
 {%- assign t = site.data.i18n[page.lang] -%}
-{%- assign en = false -%}{%- if page.lang == "en" -%}{%- assign en = true -%}{%- endif -%}
+{%- assign tr = false -%}{%- if page.lang != "el" -%}{%- assign tr = true -%}{%- endif -%}
+{%- capture tk %}title_{{ page.lang }}{% endcapture -%}
+{%- capture dk %}description_{{ page.lang }}{% endcapture -%}
+{%- capture nk %}name_{{ page.lang }}{% endcapture -%}
 <section>
   <div class="container">
     <div class="filters" role="group" aria-label="{{ t.filter_label }}">
       <button class="filter active" data-filter="all">{{ t.all }}</button>
 {%- for c in site.data.categories %}{% assign n = site.data.gallery | where: "category", c.id | size %}{% if n > 0 %}
-{%- assign cname = c.name %}{% if en and c.name_en and c.name_en != "" %}{% assign cname = c.name_en %}{% endif %}
+{%- assign cname = c.name %}{% if tr %}{% if c.name_en and c.name_en != "" %}{% assign cname = c.name_en %}{% endif %}{% if c[nk] and c[nk] != "" %}{% assign cname = c[nk] %}{% endif %}{% endif %}
       <button class="filter" data-filter="{{ c.id }}" id="{{ c.id }}">{{ cname | escape }}</button>{% endif %}{% endfor %}
     </div>
     <div class="gallery">
 {%- for p in site.data.gallery %}{% if p.image or p.video %}
-{%- assign title = p.title %}{% if en and p.title_en and p.title_en != "" %}{% assign title = p.title_en %}{% endif %}
-{%- assign desc = p.description %}{% if en and p.description_en and p.description_en != "" %}{% assign desc = p.description_en %}{% endif %}
+{%- assign title = p.title %}{% if tr %}{% if p.title_en and p.title_en != "" %}{% assign title = p.title_en %}{% endif %}{% if p[tk] and p[tk] != "" %}{% assign title = p[tk] %}{% endif %}{% endif %}
+{%- assign desc = p.description %}{% if tr %}{% if p.description_en and p.description_en != "" %}{% assign desc = p.description_en %}{% endif %}{% if p[dk] and p[dk] != "" %}{% assign desc = p[dk] %}{% endif %}{% endif %}
 {%- assign cat = site.data.categories | where: "id", p.category | first %}
-{%- assign cname = cat.name %}{% if en and cat.name_en and cat.name_en != "" %}{% assign cname = cat.name_en %}{% endif %}
+{%- assign cname = cat.name %}{% if tr %}{% if cat.name_en and cat.name_en != "" %}{% assign cname = cat.name_en %}{% endif %}{% if cat[nk] and cat[nk] != "" %}{% assign cname = cat[nk] %}{% endif %}{% endif %}
       <figure data-cat="{{ p.category }}"{% if p.social and p.social != "" %} data-social="{{ p.social | escape }}"{% endif %}{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span>{% if p.more.size > 0 %}<span class="media-count" aria-hidden="true">{{ p.more.size | plus: 1 }}</span>{% endif %}</div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ title | escape }}</button><small>{{ cname | escape }}</small></figcaption>{% if desc and desc != "" %}<div class="item-desc" hidden>{{ desc | strip | escape }}</div>{% endif %}{% if p.more.size > 0 %}<ul class="item-more" hidden>{% for m in p.more %}<li{% if m.video %} data-video="{% include src.html path=m.video %}"{% endif %}{% if m.image and m.image != "" %} data-image="{% include src.html path=m.image %}"{% endif %}></li>{% endfor %}</ul>{% endif %}</figure>
 {%- endif %}{% endfor %}
     </div>

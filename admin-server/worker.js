@@ -45,6 +45,8 @@ const MAX_TITLE = 80;
 const MAX_DESCRIPTION = 1500; // keep in sync with admin/admin.js
 const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin/admin.js
 const MAX_LINK = 300;
+// Optional translations of titles, descriptions and category names (title_en, title_de, …); keep in sync with admin/admin.js
+const LANGS = { en: { title: "αγγλικός", name: "αγγλικό", text: "αγγλική" }, de: { title: "γερμανικός", name: "γερμανικό", text: "γερμανική" } };
 // A creation can link to a post about it (the «Δείτε το βίντεο» button); keep in sync with js/main.js
 const SOCIAL_HOSTS = ["instagram.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com"];
 const SESSION_DAYS = 30;
@@ -148,7 +150,7 @@ async function getContent(gh, cfg) {
   };
 }
 
-/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description, title_en, description_en, social } */
+/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description, title_en/_de, description_en/_de, social } */
 async function addGalleryPhoto(request, gh) {
   const body = await readJson(request);
   const texts = itemTexts(body, (await readCategories(gh)).data);
@@ -182,7 +184,7 @@ async function uploadBlob(request, gh) {
   return { sha: blob.sha };
 }
 
-/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description, title_en, description_en, social } */
+/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description, title_en/_de, description_en/_de, social } */
 async function addGalleryVideo(request, gh) {
   const body = await readJson(request);
   const texts = itemTexts(body, (await readCategories(gh)).data);
@@ -304,7 +306,7 @@ async function saveGallery(request, gh) {
 }
 
 /**
- * Save the list of categories (add, rename, reorder, delete). Body: { categories: [{ id?, name }], version }
+ * Save the list of categories (add, rename, reorder, delete). Body: { categories: [{ id?, name, name_en?, name_de? }], version }
  * Existing ids never change, so links keep working after a rename. New ones get an id made from the name.
  */
 async function saveCategories(request, gh) {
@@ -329,9 +331,13 @@ async function saveCategories(request, gh) {
     names.add(lower);
     const id = c && existing.has(c.id) && !ids.has(c.id) ? c.id : null;
     if (id) ids.add(id);
-    const nameEn = String((c && c.name_en) || "").replace(/\s+/g, " ").trim();
-    if (nameEn.length > MAX_CATEGORY_NAME) throw new HttpError(400, `Το αγγλικό όνομα «${nameEn.slice(0, 20)}…» είναι πολύ μεγάλο (έως ${MAX_CATEGORY_NAME} χαρακτήρες).`);
-    return nameEn ? { id, name, name_en: nameEn } : { id, name };
+    const out = { id, name };
+    for (const [lang, word] of Object.entries(LANGS)) {
+      const n = String((c && c["name_" + lang]) || "").replace(/\s+/g, " ").trim();
+      if (n.length > MAX_CATEGORY_NAME) throw new HttpError(400, `Το ${word.name} όνομα «${n.slice(0, 20)}…» είναι πολύ μεγάλο (έως ${MAX_CATEGORY_NAME} χαρακτήρες).`);
+      if (n) out["name_" + lang] = n;
+    }
+    return out;
   });
   // New categories get an id after the existing ones are known, so they never take an existing id
   for (const c of list) {
@@ -507,13 +513,13 @@ function cleanTitle(title) {
   return t;
 }
 
-function cleanDescription(description) {
+function cleanDescription(description, what = "Η περιγραφή") {
   const d = String(description ?? "")
     .replace(/\r\n?/g, "\n")
     .split("\n").map((line) => line.replace(/[ \t]+/g, " ").trim()).join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-  if (d.length > MAX_DESCRIPTION) throw new HttpError(400, `Η περιγραφή είναι πολύ μεγάλη (έως ${MAX_DESCRIPTION} χαρακτήρες).`);
+  if (d.length > MAX_DESCRIPTION) throw new HttpError(400, `${what} είναι πολύ μεγάλη (έως ${MAX_DESCRIPTION} χαρακτήρες).`);
   return d;
 }
 
@@ -535,17 +541,21 @@ function cleanSocial(link) {
   return out;
 }
 
-/** Title, category and description of a creation; the English ones are optional and left out when empty */
+/** Title, category and description of a creation; the translations are optional and left out when empty */
 function itemTexts(src, categories) {
   const out = { title: cleanTitle(src.title) };
-  const titleEn = String(src.title_en || "").replace(/\s+/g, " ").trim();
-  if (titleEn.length > MAX_TITLE) throw new HttpError(400, `Ο αγγλικός τίτλος είναι πολύ μεγάλος (έως ${MAX_TITLE} χαρακτήρες).`);
-  if (titleEn) out.title_en = titleEn;
+  for (const [lang, word] of Object.entries(LANGS)) {
+    const t = String(src["title_" + lang] || "").replace(/\s+/g, " ").trim();
+    if (t.length > MAX_TITLE) throw new HttpError(400, `Ο ${word.title} τίτλος είναι πολύ μεγάλος (έως ${MAX_TITLE} χαρακτήρες).`);
+    if (t) out["title_" + lang] = t;
+  }
   out.category = cleanCategory(src.category, categories);
   const description = cleanDescription(src.description);
   if (description) out.description = description;
-  const descriptionEn = cleanDescription(src.description_en);
-  if (descriptionEn) out.description_en = descriptionEn;
+  for (const [lang, word] of Object.entries(LANGS)) {
+    const d = cleanDescription(src["description_" + lang], `Η ${word.text} περιγραφή`);
+    if (d) out["description_" + lang] = d;
+  }
   const social = cleanSocial(src.social);
   if (social) out.social = social;
   return out;

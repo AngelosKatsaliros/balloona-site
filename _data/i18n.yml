@@ -1,4 +1,4 @@
-# Texts shared by several pages, in each language
+# Texts shared by several pages, in each language (el, en, de)
 el:
   locale: el_GR
   home_label: "Balloona – Αρχική"
@@ -85,5 +85,51 @@ en:
     send: Send your request
     note: We'll get back to you as soon as possible.
     subject: New request from the Balloona site (English)
+    reply_lang: English (απάντηση στα αγγλικά)
     find_us: Find us
     find_us_text: See our latest creations and send us a message on social media.
+de:
+  locale: de_DE
+  home_label: "Balloona – Startseite"
+  menu: Menü
+  main_menu: Hauptmenü
+  nav:
+    home: Startseite
+    creations: Kreationen
+    decorations: Dekorationen
+    about: Über mich
+    contact: Kontakt
+  language: Sprache
+  cta_title: Ihre Idee, unsere Kreation
+  cta_button: Senden Sie uns Ihre Anfrage
+  quote: Angebot anfragen
+  filter_label: Nach Kategorie filtern
+  all: Alle
+  similar: Ich möchte etwas Ähnliches
+  zoom_in: Vergrößern
+  zoom_out: Verkleinern
+  previous: Zurück
+  next: Weiter
+  close: Schließen
+  media_group: Fotos und Videos dieser Kreation
+  watch_tiktok: Video auf TikTok ansehen
+  watch_instagram: Video auf Instagram ansehen
+  form:
+    name: Vor- und Nachname
+    phone: Telefon
+    email: E-Mail
+    date: Datum der Veranstaltung
+    type: Wofür interessieren Sie sich?
+    types:
+      - Personalisiertes Geschenk / Bobo-Ballon
+      - Geburtstagsdekoration
+      - Taufdekoration
+      - Andere Veranstaltung
+    message: Beschreiben Sie Ihre Idee
+    placeholder: Farben, Name oder Wunsch, Anzahl der Gäste, Location…
+    send: Anfrage senden
+    note: Wir melden uns so schnell wie möglich bei Ihnen.
+    subject: Νέο αίτημα από το site Balloona (Γερμανικά)
+    reply_lang: Deutsch (απάντηση στα γερμανικά)
+    find_us: Hier finden Sie uns
+    find_us_text: Sehen Sie sich unsere neuesten Kreationen an und schreiben Sie uns in den sozialen Medien.

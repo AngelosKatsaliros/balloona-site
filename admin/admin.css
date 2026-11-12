@@ -82,8 +82,11 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--rose); outl
 .en-done { font-weight: 400; color: var(--ok); }
 .en-box[open] { padding-bottom: 10px; }
 .en-box > :not(summary) { margin-inline: 10px; }
-.en-box > input, .en-box > textarea { display: block; width: calc(100% - 20px); margin-bottom: 8px; background: var(--cream); }
-.en-box > textarea { font-size: 15px; padding: 8px 12px; overflow: hidden; margin-bottom: 0; }
+.en-box > .lang-input, .en-box > textarea { display: block; width: calc(100% - 20px); margin-bottom: 8px; }
+.en-box input, .en-box > textarea { background: var(--cream); }
+.en-box > textarea { font-size: 15px; padding: 8px 12px; overflow: hidden; }
+.en-box > textarea + .lang-input { margin-top: 14px; }
+.en-box > textarea:last-child { margin-bottom: 0; }
 .add-fields .en-box { margin-bottom: 14px; }
 .add-fields .en-box .field { margin-top: 4px; }
 .add-fields .en-box > small { display: block; font-size: 13px; }
@@ -112,7 +115,7 @@ body.uploading .madd input, body.uploading .mtools button { pointer-events: none
 .icon-btn:hover:not(:disabled) { background: var(--blush); }
 .icon-btn:disabled { opacity: 0.35; cursor: default; }
 .icon-btn.danger { color: var(--danger); }
-.cat-row { display: grid; grid-template-columns: 1fr 1fr 130px auto; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--blush); border-radius: 10px; background: var(--cream); }
+.cat-row { display: grid; grid-template-columns: 1fr 1fr 1fr 110px auto; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--blush); border-radius: 10px; background: var(--cream); }
 .cat-row input { background: var(--white); }
 .link-input { grid-column: 1 / -1; position: relative; display: block; min-width: 0; }
 .link-input span { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); font-size: 14px; pointer-events: none; }

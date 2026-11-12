@@ -52,7 +52,7 @@ h1, h2, h3 { font-family: var(--serif); color: var(--burgundy); font-weight: 500
 .brand-tag { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--burgundy-2); margin-top: 2px; }
 
 .nav ul { list-style: none; display: flex; gap: 38px; margin: 0; padding: 0; }
-.nav a { text-decoration: none; font-size: 16px; color: var(--burgundy); padding: 6px 0; position: relative; }
+.nav a { text-decoration: none; font-size: 16px; color: var(--burgundy); padding: 6px 0; position: relative; white-space: nowrap; }
 .nav a::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
   background: var(--gold); transform: scaleX(0); transition: transform .25s;
@@ -359,6 +359,19 @@ body.lb-open { overflow: hidden; }
 .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ---------- Responsive ---------- */
+/* Narrower desktops: tighten the header so the menu, social buttons and ΕΛ/EN/DE switch fit in one row */
+@media (max-width: 1240px) {
+  .header-inner { gap: 16px; }
+  .nav ul { gap: 22px; }
+}
+@media (max-width: 1080px) and (min-width: 961px) {
+  .brand img { width: 50px; height: 50px; }
+  .brand-name { font-size: 38px; }
+  .nav ul { gap: 18px; }
+  .nav a { font-size: 15px; }
+  .header-social { padding-left: 14px; gap: 6px; }
+  .header-social a { width: 36px; height: 36px; }
+}
 @media (max-width: 960px) {
   .nav-toggle { display: block; order: 3; }
   .header-social { order: 2; border-left: 0; padding-left: 0; }
@@ -416,12 +429,13 @@ body.lb-open { overflow: hidden; }
   .nav-social svg { width: 18px; height: 18px; }
 }
 @media (max-width: 360px) {
-  .header-inner { gap: 8px; }
-  .brand { gap: 8px; }
-  .brand img { width: 40px; height: 40px; }
-  .brand-name { font-size: 31px; }
-  .brand-tag { font-size: 12px; }
-  .nav-toggle { padding: 6px; }
+  .header-inner { gap: 6px; }
+  .brand { gap: 6px; }
+  .brand img { width: 36px; height: 36px; }
+  .brand-name { font-size: 28px; }
+  .brand-tag { font-size: 11px; }
+  .nav-toggle { padding: 4px; }
+  .lang-switch a { min-width: 26px; padding: 0 3px; font-size: 11px; letter-spacing: .03em; }
 }
 
 /* Signature image (cut from the design; replace with a scan of the real signature if you like) */

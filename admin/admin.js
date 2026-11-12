@@ -37,7 +37,10 @@
   let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "", categories: [], savedCategories: [], categoriesVersion: "" };
   let addImage = null; // data URL of the resized photo to add
   let addVideo = null; // { file, ext, poster } of the video to add
-  const enOpen = new WeakSet(); // creations whose «Στα αγγλικά» box is open, kept open across redraws
+  const enOpen = new WeakSet(); // creations whose «Μεταφράσεις» box is open, kept open across redraws
+  // Optional translations (title_en, description_de, name_de, …); keep in sync with admin-server/worker.js
+  const LANGS = [{ code: "en", tag: "EN", in: "στα αγγλικά" }, { code: "de", tag: "DE", in: "στα γερμανικά" }];
+  const TR_FIELDS = LANGS.flatMap((l) => ["title_" + l.code, "description_" + l.code]);
   const DROP_TEXT = "<strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small>";
 
   /* ---------- API ---------- */
@@ -120,7 +123,7 @@
   // Compare lists by content only (key order and empty fields do not count as changes)
   const trim = (s) => String(s || "").trim();
   function canon(list) {
-    return JSON.stringify(list.map((p) => [p.title, trim(p.title_en), p.category, trim(p.description), trim(p.description_en), trim(p.social), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
+    return JSON.stringify(list.map((p) => [p.title, p.category, trim(p.description), ...TR_FIELDS.map((f) => trim(p[f])), trim(p.social), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
   }
 
   function galleryDirty() {
@@ -128,7 +131,7 @@
   }
 
   function catsDirty() {
-    const strip = (list) => JSON.stringify(list.map((c) => [c.id || "", c.name.trim(), trim(c.name_en)]));
+    const strip = (list) => JSON.stringify(list.map((c) => [c.id || "", c.name.trim(), ...LANGS.map((l) => trim(c["name_" + l.code]))]));
     return strip(state.categories) !== strip(state.savedCategories);
   }
 
@@ -182,9 +185,10 @@
             <textarea data-field="description" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Περιγραφή (προαιρετικό)" aria-label="Περιγραφή">${esc(p.description)}</textarea>
             <label class="link-input" title="Σύνδεσμος βίντεο σε TikTok ή Instagram"><span aria-hidden="true">🔗</span><input data-field="social" value="${esc(p.social)}" inputmode="url" autocomplete="off" maxlength="300" placeholder="TikTok / Instagram (προαιρετικό)" aria-label="Σύνδεσμος βίντεο σε TikTok ή Instagram"></label>
             <details class="en-box" data-en${enOpen.has(p) ? " open" : ""}>
-              <summary>Στα αγγλικά ${trim(p.title_en) || trim(p.description_en) ? `<span class="en-done">✓ ${trim(p.title_en) && trim(p.description_en) ? "τίτλος και περιγραφή" : trim(p.title_en) ? "τίτλος" : "περιγραφή"}</span>` : "<small>(προαιρετικό)</small>"}</summary>
-              <input data-field="title_en" value="${esc(p.title_en)}" maxlength="80" lang="en" placeholder="Τίτλος στα αγγλικά" aria-label="Τίτλος στα αγγλικά">
-              <textarea data-field="description_en" rows="2" maxlength="${MAX_DESCRIPTION}" lang="en" placeholder="Περιγραφή στα αγγλικά" aria-label="Περιγραφή στα αγγλικά">${esc(p.description_en)}</textarea>
+              <summary>Μεταφράσεις ${translated(p).length ? `<span class="en-done">✓ ${translated(p).join(", ")}</span>` : "<small>(προαιρετικό)</small>"}</summary>
+              ${LANGS.map((l) => `
+              <label class="lang-input"><span>${l.tag}</span><input data-field="title_${l.code}" value="${esc(p["title_" + l.code])}" maxlength="80" lang="${l.code}" placeholder="Τίτλος ${l.in}" aria-label="Τίτλος ${l.in}"></label>
+              <textarea data-field="description_${l.code}" rows="2" maxlength="${MAX_DESCRIPTION}" lang="${l.code}" placeholder="Περιγραφή ${l.in}" aria-label="Περιγραφή ${l.in}">${esc(p["description_" + l.code])}</textarea>`).join("")}
             </details>
             <div class="strip" aria-label="Φωτογραφίες και βίντεο της δημιουργίας">
               ${media.map((m, j) => `
@@ -228,7 +232,7 @@
     if (field === "title" || field === "category") {
       item[field] = e.target.value;
     } else if (e.target.value.trim()) {
-      item[field] = e.target.value; // description, title_en, description_en: optional
+      item[field] = e.target.value; // description, social and the translations: optional
     } else {
       delete item[field];
     }
@@ -248,9 +252,14 @@
     const kept = new Map((saved || []).map((p) => [p.video || p.image, p]));
     const lost = (field) => sent.some((p) => trim(p[field]) && !(kept.get(p.video || p.image) || {})[field]);
     if (lost("description")) return "Οι περιγραφές";
-    if (lost("title_en") || lost("description_en")) return "Τα αγγλικά κείμενα";
+    if (TR_FIELDS.some(lost)) return "Οι μεταφράσεις";
     if (lost("social")) return "Οι σύνδεσμοι βίντεο";
     return "";
+  }
+
+  // The languages a creation has a title or description in, e.g. ["EN", "DE"]
+  function translated(p) {
+    return LANGS.filter((l) => trim(p["title_" + l.code]) || trim(p["description_" + l.code])).map((l) => l.tag);
   }
 
   // Same check as the server: a TikTok or Instagram address (https:// may be left out)
@@ -316,11 +325,11 @@
       }
       if (catsDirty()) {
         const res = await api("PUT", "/categories", {
-          categories: state.categories.map((c) => ({ id: c.id || "", name: c.name, name_en: trim(c.name_en) })),
+          categories: state.categories.map((c) => ({ id: c.id || "", name: c.name, ...Object.fromEntries(LANGS.map((l) => ["name_" + l.code, trim(c["name_" + l.code])])) })),
           version: state.categoriesVersion,
         });
-        const withEn = (list) => list.filter((c) => trim(c.name_en)).length;
-        if (!lost && withEn(res.categories || []) < withEn(state.categories)) lost = "Τα αγγλικά ονόματα κατηγοριών";
+        const names = (list) => list.reduce((n, c) => n + LANGS.filter((l) => trim(c["name_" + l.code])).length, 0);
+        if (!lost && names(res.categories || []) < names(state.categories)) lost = "Οι μεταφράσεις των κατηγοριών";
       }
       await load();
       if (lost) toast(lost + " δεν αποθηκεύτηκαν" + OLD_SERVER, true);
@@ -359,7 +368,7 @@
       return `
         <li class="cat-row" data-i="${i}">
           <label class="lang-input"><span>ΕΛ</span><input data-cat-name value="${esc(c.name)}" maxlength="40" aria-label="Όνομα κατηγορίας"></label>
-          <label class="lang-input"><span>EN</span><input data-cat-name-en value="${esc(c.name_en)}" maxlength="40" lang="en" placeholder="Στα αγγλικά (προαιρετικό)" aria-label="Όνομα κατηγορίας στα αγγλικά"></label>
+          ${LANGS.map((l) => `<label class="lang-input"><span>${l.tag}</span><input data-cat-lang="${l.code}" value="${esc(c["name_" + l.code])}" maxlength="40" lang="${l.code}" placeholder="${l.in.charAt(0).toUpperCase() + l.in.slice(1)} (προαιρετικό)" aria-label="Όνομα κατηγορίας ${l.in}"></label>`).join("")}
           <span class="cat-count muted">${!c.id ? `<span class="new">Νέα</span>` : n === 0 ? "καμία δημιουργία" : n === 1 ? "1 δημιουργία" : `${n} δημιουργίες`}</span>
           <div class="item-actions">
             <button class="icon-btn" data-cact="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
@@ -375,7 +384,7 @@
   $("cat-list").addEventListener("input", (e) => {
     const c = state.categories[+e.target.closest(".cat-row").dataset.i];
     if (e.target.matches("[data-cat-name]")) c.name = e.target.value;
-    else if (e.target.matches("[data-cat-name-en]")) c.name_en = e.target.value;
+    else if (e.target.matches("[data-cat-lang]")) c["name_" + e.target.dataset.catLang] = e.target.value;
     else return;
     $("savebar").hidden = !dirty();
   });
@@ -505,26 +514,25 @@
     const title = $("add-title").value;
     const category = $("add-category").value;
     const description = $("add-description").value;
-    const title_en = $("add-title-en").value;
-    const description_en = $("add-description-en").value;
+    const tr = Object.fromEntries(LANGS.flatMap((l) => [["title_" + l.code, $("add-title-" + l.code).value], ["description_" + l.code, $("add-description-" + l.code).value]]));
     const social = $("add-social").value;
     try {
       let res;
       if (addVideo) {
         const sha = await uploadVideoBlob(addVideo.file, (pct) => { btn.textContent = `Ανέβασμα… ${pct}%`; });
         btn.textContent = "Αποθήκευση…";
-        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description, title_en, description_en, social });
+        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description, ...tr, social });
       } else {
-        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description, title_en, description_en, social });
+        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description, ...tr, social });
       }
       const wasVideo = !!addVideo;
       const saved = (res.gallery || [])[0] || {};
-      const lost = trim(description) && !saved.description ? "η περιγραφή" : (trim(title_en) && !saved.title_en) || (trim(description_en) && !saved.description_en) ? "τα αγγλικά κείμενα" : trim(social) && !saved.social ? "ο σύνδεσμος του βίντεο" : "";
+      const lost = trim(description) && !saved.description ? "η περιγραφή" : TR_FIELDS.some((f) => trim(tr[f]) && !saved[f]) ? "οι μεταφράσεις" : trim(social) && !saved.social ? "ο σύνδεσμος του βίντεο" : "";
       $("add-form").reset();
       $("add-en").open = false;
       resetAdd();
       await load();
-      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά " : "Η φωτογραφία ανέβηκε, αλλά ") + lost + (lost.startsWith("τα ") ? " δεν αποθηκεύτηκαν" : " δεν αποθηκεύτηκε") + OLD_SERVER, true);
+      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά " : "Η φωτογραφία ανέβηκε, αλλά ") + lost + (lost === "οι μεταφράσεις" ? " δεν αποθηκεύτηκαν" : " δεν αποθηκεύτηκε") + OLD_SERVER, true);
       else toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);

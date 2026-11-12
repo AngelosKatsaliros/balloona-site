@@ -6,8 +6,8 @@
       <input type="hidden" name="access_key" value="7b43d998-86ef-4bdd-8b35-74ab86b0a6a3">
       <input type="hidden" name="subject" value="{{ f.subject }}">
       <input type="hidden" name="from_name" value="Balloona site">
-      {%- if page.lang == "en" %}
-      <input type="hidden" name="Γλώσσα" value="English (απάντηση στα αγγλικά)">
+      {%- if f.reply_lang %}
+      <input type="hidden" name="Γλώσσα" value="{{ f.reply_lang }}">
       {%- endif %}
       <div class="form-row">
         <div class="field"><label for="name">{{ f.name }} *</label><input id="name" name="name" autocomplete="name" required></div>

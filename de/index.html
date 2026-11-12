@@ -1,0 +1,58 @@
+---
+layout: default
+lang: de
+ref: home
+title: "Balloona | Personalisierte Ballons & Dekorationen"
+description: "Balloona – Luxury Balloon Creations. Personalisierte Bobo-Ballons, Geschenke und Ballondekorationen für Geburtstage, Taufen und Feiern."
+---
+<section class="hero" style="padding:0">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Luxury Balloon Creations</p>
+      <h1>Kleine Momente,<br>große Freude!</h1>
+      <hr class="rule">
+      <p class="lead">Personalisierte Ballons und Dekorationen für Ihre schönsten Momente.</p>
+      <div class="hero-actions">
+        <a class="btn" href="{% include url.html to="contact" %}">Angebot anfragen <span class="arrow">&rarr;</span></a>
+        <a class="link-underline" href="{% include url.html to="creations" %}">Unsere Kreationen ansehen</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-media"><img src="{% include src.html path=site.data.home.hero %}" alt="Eine Ballonkreation von Balloona" fetchpriority="high"></div>
+</section>
+
+<section>
+  <div class="container">
+    <h2 class="section-title">Kreationen für jeden Anlass</h2>
+    <div class="cards">
+      <a class="card" href="{% include url.html to="creations" %}#dora">
+        <img src="{% include src.html path=site.data.home.gift %}" alt="Personalisierte Geschenke" loading="lazy">
+        <h3>Personalisierte Geschenke</h3>
+      </a>
+      <a class="card" href="{% include url.html to="creations" %}#genethlia">
+        <img src="{% include src.html path=site.data.home.birthday %}" alt="Geburtstagsdekoration" loading="lazy">
+        <h3>Geburtstage</h3>
+      </a>
+      <a class="card" href="{% include url.html to="creations" %}#vaptiseis">
+        <img src="{% include src.html path=site.data.home.baptism %}" alt="Taufdekoration" loading="lazy">
+        <h3>Taufen &amp; Feiern</h3>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="container">
+    <h2 class="section-title">Ein paar Worte über mich</h2>
+    <div class="about">
+      <div class="about-img"><img src="{% include src.html path=site.data.home.about %}" alt="Elisavet in der Balloona-Werkstatt" loading="lazy"></div>
+      <div class="about-text">
+        <p>Ich bin Pädagogin, und Kreativität und Fantasie sind ein wichtiger Teil meines Lebens! Ich liebe es, kleinen Ideen eine Form zu geben und Dinge zu schaffen, die ein Lächeln schenken.</p>
+        <p>So habe ich begonnen, personalisierte Bobo-Ballons zu gestalten, und so ist Balloona entstanden: aus dem Wunsch, Fantasie in einzigartige Geschenke voller Liebe und Sorgfalt zu verwandeln.</p>
+        <p>Jede Kreation hat ihre eigene kleine Geschichte – und ich freue mich sehr, ein Teil Ihrer Geschichte zu werden!</p>
+        <div class="signature"><img src="{{ '/images/signature-de.png' | relative_url }}" alt="Mit Liebe, Elisavet" width="300" height="86"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% include cta.html %}

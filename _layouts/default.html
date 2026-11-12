@@ -10,10 +10,13 @@
 <link rel="canonical" href="{{ site.canonical_url }}{{ here[page.lang] }}">
 <link rel="alternate" hreflang="el" href="{{ site.canonical_url }}{{ here.el }}">
 <link rel="alternate" hreflang="en" href="{{ site.canonical_url }}{{ here.en }}">
+<link rel="alternate" hreflang="de" href="{{ site.canonical_url }}{{ here.de }}">
 <link rel="alternate" hreflang="x-default" href="{{ site.canonical_url }}{{ here.el }}">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="{{ t.locale }}">
-<meta property="og:locale:alternate" content="{% if page.lang == 'en' %}el_GR{% else %}en_GB{% endif %}">
+{%- for l in site.data.i18n %}{% if l[0] != page.lang %}
+<meta property="og:locale:alternate" content="{{ l[1].locale }}">
+{%- endif %}{% endfor %}
 <meta property="og:site_name" content="Balloona">
 <meta property="og:title" content="{{ page.title | escape }}">
 <meta property="og:description" content="{{ page.description | escape }}">
@@ -55,6 +58,7 @@
     <div class="lang-switch" role="group" aria-label="{{ t.language }}">
       <a href="{{ here.el | relative_url }}" lang="el" hreflang="el" title="Ελληνικά"{% if page.lang == 'el' %} aria-current="true"{% endif %}>ΕΛ</a>
       <a href="{{ here.en | relative_url }}" lang="en" hreflang="en" title="English"{% if page.lang == 'en' %} aria-current="true"{% endif %}>EN</a>
+      <a href="{{ here.de | relative_url }}" lang="de" hreflang="de" title="Deutsch"{% if page.lang == 'de' %} aria-current="true"{% endif %}>DE</a>
     </div>
   </div>
 </header>
