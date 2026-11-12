@@ -271,6 +271,18 @@ body.lb-open { overflow: hidden; }
 .lb-desc { white-space: pre-line; color: var(--text); font-size: 16px; line-height: 1.7; }
 .lb-desc.placeholder { color: var(--muted); font-style: italic; }
 .lb-info .btn { align-self: flex-start; margin-top: 28px; }
+.lb-social {
+  display: inline-flex; align-items: center; gap: 10px; align-self: flex-start; margin-top: 26px;
+  padding: 11px 20px; border: 1px solid var(--blush-2); border-radius: 6px; background: var(--white);
+  color: var(--burgundy); text-decoration: none; font-family: var(--sans); font-size: 15px; font-weight: 500;
+  transition: background .2s, border-color .2s;
+}
+.lb-social:hover, .lb-social:focus-visible { background: var(--blush); border-color: var(--rose); }
+.lb-social > span { display: inline-flex; align-items: center; gap: 10px; }
+.lb-social svg { width: 20px; height: 20px; flex: none; }
+.lb-social svg.ext { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; opacity: .55; }
+.lb-social[data-platform="tiktok"] .on-instagram, .lb-social[data-platform="instagram"] .on-tiktok { display: none; }
+.lb-social:not([hidden]) + .btn { margin-top: 12px; }
 .lb-hint { margin: auto 0 0; padding-top: 24px; font-size: 13px; color: var(--muted); }
 .lb-items { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--blush); font-size: 13px; color: var(--muted); }
 .lb-items span { flex: 1; text-align: center; }
@@ -294,7 +306,7 @@ body.lb-open { overflow: hidden; }
   .lb-prev { left: auto; right: 58px; }
   .lb-next { right: 10px; }
   .lb-zoom button, .lb-nav { width: 40px; height: 40px; }
-  .lb-info .btn { align-self: stretch; justify-content: center; }
+  .lb-info .btn, .lb-social { align-self: stretch; justify-content: center; }
 }
 
 .services { display: grid; gap: 48px; }

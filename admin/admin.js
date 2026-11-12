@@ -22,6 +22,8 @@
   const MAX_DESCRIPTION = 1500; // keep in sync with admin-server/worker.js
   const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin-server/worker.js
   const OLD_SERVER = ": ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
+  const SOCIAL_HOSTS = ["instagram.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com"]; // keep in sync with admin-server/worker.js
+  const SOCIAL_HELP = "Ο σύνδεσμος πρέπει να είναι ανάρτηση από TikTok ή Instagram (π.χ. https://www.tiktok.com/@balloona.pop/video/…).";
 
   const $ = (id) => document.getElementById(id);
   const store = {
@@ -118,7 +120,7 @@
   // Compare lists by content only (key order and empty fields do not count as changes)
   const trim = (s) => String(s || "").trim();
   function canon(list) {
-    return JSON.stringify(list.map((p) => [p.title, trim(p.title_en), p.category, trim(p.description), trim(p.description_en), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
+    return JSON.stringify(list.map((p) => [p.title, trim(p.title_en), p.category, trim(p.description), trim(p.description_en), trim(p.social), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
   }
 
   function galleryDirty() {
@@ -178,6 +180,7 @@
             <input data-field="title" value="${esc(p.title)}" maxlength="80" aria-label="Τίτλος">
             <select data-field="category" aria-label="Κατηγορία">${categoryOptions(p.category)}</select>
             <textarea data-field="description" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Περιγραφή (προαιρετικό)" aria-label="Περιγραφή">${esc(p.description)}</textarea>
+            <label class="link-input" title="Σύνδεσμος βίντεο σε TikTok ή Instagram"><span aria-hidden="true">🔗</span><input data-field="social" value="${esc(p.social)}" inputmode="url" autocomplete="off" maxlength="300" placeholder="TikTok / Instagram (προαιρετικό)" aria-label="Σύνδεσμος βίντεο σε TikTok ή Instagram"></label>
             <details class="en-box" data-en${enOpen.has(p) ? " open" : ""}>
               <summary>Στα αγγλικά ${trim(p.title_en) || trim(p.description_en) ? `<span class="en-done">✓ ${trim(p.title_en) && trim(p.description_en) ? "τίτλος και περιγραφή" : trim(p.title_en) ? "τίτλος" : "περιγραφή"}</span>` : "<small>(προαιρετικό)</small>"}</summary>
               <input data-field="title_en" value="${esc(p.title_en)}" maxlength="80" lang="en" placeholder="Τίτλος στα αγγλικά" aria-label="Τίτλος στα αγγλικά">
@@ -246,7 +249,20 @@
     const lost = (field) => sent.some((p) => trim(p[field]) && !(kept.get(p.video || p.image) || {})[field]);
     if (lost("description")) return "Οι περιγραφές";
     if (lost("title_en") || lost("description_en")) return "Τα αγγλικά κείμενα";
+    if (lost("social")) return "Οι σύνδεσμοι βίντεο";
     return "";
+  }
+
+  // Same check as the server: a TikTok or Instagram address (https:// may be left out)
+  function socialOk(link) {
+    const s = trim(link);
+    if (!s) return true;
+    try {
+      const u = new URL(/^[a-z]+:\/\//i.test(s) ? s : "https://" + s);
+      return /^https?:$/.test(u.protocol) && SOCIAL_HOSTS.includes(u.hostname.toLowerCase().replace(/^(www|m)\./, ""));
+    } catch {
+      return false;
+    }
   }
 
   $("list").addEventListener("click", (e) => {
@@ -280,6 +296,7 @@
   $("save").addEventListener("click", async () => {
     for (const p of state.gallery) {
       if (!p.title.trim()) return toast("Κάθε φωτογραφία και βίντεο χρειάζεται τίτλο.", true);
+      if (!socialOk(p.social)) return toast(`«${p.title.trim()}»: ${SOCIAL_HELP}`, true);
     }
     const names = state.categories.map((c) => c.name.trim().toLocaleLowerCase("el"));
     if (names.some((n) => !n)) return toast("Κάθε κατηγορία χρειάζεται όνομα.", true);
@@ -480,6 +497,7 @@
   $("add-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     if (!addImage && !addVideo) return toast("Διάλεξε πρώτα μια φωτογραφία ή ένα βίντεο.", true);
+    if (!socialOk($("add-social").value)) return toast(SOCIAL_HELP, true);
     if (dirty() && !confirm("Έχεις αλλαγές στη λίστα που δεν αποθηκεύτηκαν και θα χαθούν. Συνέχεια;")) return;
     const btn = $("add-btn");
     btn.disabled = true;
@@ -489,23 +507,24 @@
     const description = $("add-description").value;
     const title_en = $("add-title-en").value;
     const description_en = $("add-description-en").value;
+    const social = $("add-social").value;
     try {
       let res;
       if (addVideo) {
         const sha = await uploadVideoBlob(addVideo.file, (pct) => { btn.textContent = `Ανέβασμα… ${pct}%`; });
         btn.textContent = "Αποθήκευση…";
-        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description, title_en, description_en });
+        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description, title_en, description_en, social });
       } else {
-        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description, title_en, description_en });
+        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description, title_en, description_en, social });
       }
       const wasVideo = !!addVideo;
       const saved = (res.gallery || [])[0] || {};
-      const lost = trim(description) && !saved.description ? "η περιγραφή" : (trim(title_en) && !saved.title_en) || (trim(description_en) && !saved.description_en) ? "τα αγγλικά κείμενα" : "";
+      const lost = trim(description) && !saved.description ? "η περιγραφή" : (trim(title_en) && !saved.title_en) || (trim(description_en) && !saved.description_en) ? "τα αγγλικά κείμενα" : trim(social) && !saved.social ? "ο σύνδεσμος του βίντεο" : "";
       $("add-form").reset();
       $("add-en").open = false;
       resetAdd();
       await load();
-      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά " : "Η φωτογραφία ανέβηκε, αλλά ") + lost + (lost === "η περιγραφή" ? " δεν αποθηκεύτηκε" : " δεν αποθηκεύτηκαν") + OLD_SERVER, true);
+      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά " : "Η φωτογραφία ανέβηκε, αλλά ") + lost + (lost.startsWith("τα ") ? " δεν αποθηκεύτηκαν" : " δεν αποθηκεύτηκε") + OLD_SERVER, true);
       else toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);

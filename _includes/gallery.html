@@ -1,6 +1,7 @@
 {%- comment -%}
   The Δημιουργίες grid, its filters and the lightbox, in the page's language.
   English pages use title_en / description_en / name_en when they are filled in, otherwise the Greek text.
+  "social" is an optional link to a TikTok or Instagram post about the creation (button in the lightbox).
 {%- endcomment -%}
 {%- assign t = site.data.i18n[page.lang] -%}
 {%- assign en = false -%}{%- if page.lang == "en" -%}{%- assign en = true -%}{%- endif -%}
@@ -18,7 +19,7 @@
 {%- assign desc = p.description %}{% if en and p.description_en and p.description_en != "" %}{% assign desc = p.description_en %}{% endif %}
 {%- assign cat = site.data.categories | where: "id", p.category | first %}
 {%- assign cname = cat.name %}{% if en and cat.name_en and cat.name_en != "" %}{% assign cname = cat.name_en %}{% endif %}
-      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span>{% if p.more.size > 0 %}<span class="media-count" aria-hidden="true">{{ p.more.size | plus: 1 }}</span>{% endif %}</div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ title | escape }}</button><small>{{ cname | escape }}</small></figcaption>{% if desc and desc != "" %}<div class="item-desc" hidden>{{ desc | strip | escape }}</div>{% endif %}{% if p.more.size > 0 %}<ul class="item-more" hidden>{% for m in p.more %}<li{% if m.video %} data-video="{% include src.html path=m.video %}"{% endif %}{% if m.image and m.image != "" %} data-image="{% include src.html path=m.image %}"{% endif %}></li>{% endfor %}</ul>{% endif %}</figure>
+      <figure data-cat="{{ p.category }}"{% if p.social and p.social != "" %} data-social="{{ p.social | escape }}"{% endif %}{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span>{% if p.more.size > 0 %}<span class="media-count" aria-hidden="true">{{ p.more.size | plus: 1 }}</span>{% endif %}</div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ title | escape }}</button><small>{{ cname | escape }}</small></figcaption>{% if desc and desc != "" %}<div class="item-desc" hidden>{{ desc | strip | escape }}</div>{% endif %}{% if p.more.size > 0 %}<ul class="item-more" hidden>{% for m in p.more %}<li{% if m.video %} data-video="{% include src.html path=m.video %}"{% endif %}{% if m.image and m.image != "" %} data-image="{% include src.html path=m.image %}"{% endif %}></li>{% endfor %}</ul>{% endif %}</figure>
 {%- endif %}{% endfor %}
     </div>
   </div>
@@ -43,6 +44,11 @@
       <h2 id="lb-title"></h2>
       <hr class="rule">
       <div class="lb-desc" id="lb-desc"></div>
+      <a class="lb-social" id="lb-social" href="#" target="_blank" rel="noopener" hidden>
+        <span class="on-tiktok"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> {{ t.watch_tiktok }}</span>
+        <span class="on-instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> {{ t.watch_instagram }}</span>
+        <svg class="ext" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+      </a>
       <a class="btn" id="lb-cta" href="{% include url.html to="contact" %}" data-base="{% include url.html to="contact" %}">{{ t.similar }} <span class="arrow">&rarr;</span></a>
       <p class="lb-hint" id="lb-hint"></p>
       <div class="lb-items" id="lb-items">

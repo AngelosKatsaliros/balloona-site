@@ -42,7 +42,9 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
 - `admin/` is a Greek admin page at `/admin/`: log in with a password, upload a photo (resized in the
   browser to max 1800px) or a video (max 50 MB, a cover frame is captured automatically), set title and
   category and an optional description (plus optional English title/description), add more photos/videos to a creation (other angles, up to 12,
-  stored in its `more` list; the first one is the cover shown in the grid), reorder, delete, and swap
+  stored in its `more` list; the first one is the cover shown in the grid), add a link to a TikTok or
+  Instagram post about it (`social`, shown as a «Δείτε το βίντεο στο TikTok/Instagram» button in the
+  lightbox; only tiktok.com / instagram.com links are accepted), reorder, delete, and swap
   home page photos. The «Κατηγορίες» tab adds, renames (Greek and English), reorders and deletes categories (ids stay fixed;
   `dora`, `genethlia`, `vaptiseis` are linked from the home page and cannot be deleted).
 - On Δημιουργίες, clicking a card opens a lightbox: the photo can be zoomed (click/tap, mouse wheel, pinch,

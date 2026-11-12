@@ -23,6 +23,8 @@ el:
   next: Επόμενη
   close: Κλείσιμο
   media_group: Φωτογραφίες και βίντεο της δημιουργίας
+  watch_tiktok: Δείτε το βίντεο στο TikTok
+  watch_instagram: Δείτε το βίντεο στο Instagram
   form:
     name: Ονοματεπώνυμο
     phone: Τηλέφωνο
@@ -65,6 +67,8 @@ en:
   next: Next
   close: Close
   media_group: Photos and videos of this creation
+  watch_tiktok: Watch the video on TikTok
+  watch_instagram: Watch the video on Instagram
   form:
     name: Full name
     phone: Phone

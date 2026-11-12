@@ -44,6 +44,9 @@ const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
 const MAX_TITLE = 80;
 const MAX_DESCRIPTION = 1500; // keep in sync with admin/admin.js
 const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin/admin.js
+const MAX_LINK = 300;
+// A creation can link to a post about it (the «Δείτε το βίντεο» button); keep in sync with js/main.js
+const SOCIAL_HOSTS = ["instagram.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com"];
 const SESSION_DAYS = 30;
 
 class HttpError extends Error {
@@ -145,7 +148,7 @@ async function getContent(gh, cfg) {
   };
 }
 
-/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description, title_en, description_en } */
+/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description, title_en, description_en, social } */
 async function addGalleryPhoto(request, gh) {
   const body = await readJson(request);
   const texts = itemTexts(body, (await readCategories(gh)).data);
@@ -179,7 +182,7 @@ async function uploadBlob(request, gh) {
   return { sha: blob.sha };
 }
 
-/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description, title_en, description_en } */
+/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description, title_en, description_en, social } */
 async function addGalleryVideo(request, gh) {
   const body = await readJson(request);
   const texts = itemTexts(body, (await readCategories(gh)).data);
@@ -514,6 +517,24 @@ function cleanDescription(description) {
   return d;
 }
 
+/** An optional link to the creation's TikTok or Instagram post. Returns "" when empty. */
+function cleanSocial(link) {
+  let s = String(link ?? "").trim();
+  if (!s) return "";
+  if (!/^[a-z]+:\/\//i.test(s)) s = "https://" + s;
+  let u;
+  try { u = new URL(s); } catch { u = null; }
+  const host = u ? u.hostname.toLowerCase().replace(/^(www|m)\./, "") : "";
+  if (!u || !/^https?:$/.test(u.protocol) || u.username || u.password || u.port || !SOCIAL_HOSTS.includes(host)) {
+    throw new HttpError(400, "Ο σύνδεσμος πρέπει να είναι ανάρτηση από TikTok ή Instagram (π.χ. https://www.tiktok.com/@balloona.pop/video/…).");
+  }
+  u.protocol = "https:";
+  u.hash = "";
+  const out = u.href;
+  if (out.length > MAX_LINK) throw new HttpError(400, "Ο σύνδεσμος είναι πολύ μεγάλος.");
+  return out;
+}
+
 /** Title, category and description of a creation; the English ones are optional and left out when empty */
 function itemTexts(src, categories) {
   const out = { title: cleanTitle(src.title) };
@@ -525,6 +546,8 @@ function itemTexts(src, categories) {
   if (description) out.description = description;
   const descriptionEn = cleanDescription(src.description_en);
   if (descriptionEn) out.description_en = descriptionEn;
+  const social = cleanSocial(src.social);
+  if (social) out.social = social;
   return out;
 }
 

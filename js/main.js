@@ -90,6 +90,7 @@ if (lb && typeof lb.showModal === 'function') {
   const nextBtn = lb.querySelector('.lb-next');
   const desc = document.getElementById('lb-desc');
   const cta = document.getElementById('lb-cta');
+  const social = document.getElementById('lb-social');
   const hint = document.getElementById('lb-hint');
   const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   const MAX_ZOOM = 5;
@@ -209,6 +210,18 @@ if (lb && typeof lb.showModal === 'function') {
     return [cover, ...more].filter((m) => m.video || m.image);
   }
 
+  // The creation's TikTok/Instagram post, if the admin added one
+  function socialLink(url) {
+    try {
+      const u = new URL(url || '');
+      if (u.protocol !== 'https:') return null;
+      const host = u.hostname.replace(/^(www|m)\./, '');
+      if (host === 'instagram.com') return { href: u.href, platform: 'instagram' };
+      if (host === 'tiktok.com' || host === 'vm.tiktok.com' || host === 'vt.tiktok.com') return { href: u.href, platform: 'tiktok' };
+    } catch {}
+    return null;
+  }
+
   function showItem(i, at) {
     index = (i + items.length) % items.length;
     const fig = items[index];
@@ -221,6 +234,9 @@ if (lb && typeof lb.showModal === 'function') {
     document.getElementById('lb-title').textContent = title;
     desc.textContent = text || T.noDesc;
     desc.classList.toggle('placeholder', !text);
+    const link = socialLink(fig.dataset.social);
+    social.hidden = !link;
+    if (link) { social.href = link.href; social.dataset.platform = link.platform; }
     cta.href = cta.dataset.base + '?gia=' + encodeURIComponent(title) + '&cat=' + encodeURIComponent(fig.dataset.cat || '');
     document.getElementById('lb-count').textContent = items.length > 1 ? `${T.creation} ${index + 1}\u00a0${T.of}\u00a0${items.length}` : '';
     document.getElementById('lb-items').hidden = items.length < 2;
