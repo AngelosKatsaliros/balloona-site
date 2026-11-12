@@ -15,8 +15,8 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
    Add more photos to the gallery in `dimiourgies.html`.
 2. **Signature:** `images/signature.png` is cut from the mockup. For a sharper result, scan Ελισάβετ's real signature and save it with the same name (transparent PNG).
 2. **Logo:** replace `images/logo.png` with the real logo (square PNG, at least 256px).
-3. **Request form:** requests are emailed through [Web3Forms](https://web3forms.com). Put the access key in the
-   `access_key` field of `epikoinonia.html`. Until then the form tells visitors to message on Instagram.
+3. **Request form:** requests are emailed through [Web3Forms](https://web3forms.com). The access key is in the
+   `access_key` field of `epikoinonia.html` (manage it at web3forms.com).
 4. **Domain:** if the domain is not `balloona.gr`, update the `canonical`/`og:` URLs at the top of each page.
 5. **Hosting:** drag the folder into Netlify Drop (app.netlify.com/drop), or push it to GitHub Pages / Vercel.
 
