@@ -74,6 +74,11 @@
                 <option value="">Διάλεξε…</option>
               </select>
             </label>
+            <label class="field">
+              <span>Περιγραφή <small>(προαιρετικό)</small></span>
+              <textarea id="add-description" maxlength="1500" rows="4" placeholder="Π.χ. τι περιλαμβάνει, μέγεθος, χρώματα, για ποια περίσταση ταιριάζει…"></textarea>
+              <small class="muted">Εμφανίζεται δίπλα στη φωτογραφία, όταν κάποιος την πατήσει στο site.</small>
+            </label>
             <p class="muted small" id="add-hint">Βίντεο έως 50 MB (περίπου 20–40 δευτερόλεπτα από κινητό).</p>
             <button class="btn" type="submit" id="add-btn">Ανέβασμα στο site</button>
           </div>
@@ -85,7 +90,7 @@
           <h2>Στη σελίδα «Δημιουργίες»</h2>
           <span class="muted" id="count"></span>
         </div>
-        <p class="muted small">Η πρώτη της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια.</p>
+        <p class="muted small">Η πρώτη της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια. Η περιγραφή φαίνεται όταν κάποιος πατήσει τη φωτογραφία.</p>
         <ul class="list" id="list"></ul>
       </div>
     </div>

@@ -67,11 +67,34 @@
     </div>
     <div class="gallery">
 {% for p in site.data.gallery %}{% if p.image or p.video %}
-      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}>{% if p.video %}<div class="media"><video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-label="{{ p.title | escape }}"></video><span class="sound-badge" aria-hidden="true"></span></div>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<figcaption>{{ p.title | escape }}<small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption></figure>
+      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span></div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ p.title | escape }}</button><small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption>{% if p.description %}<div class="item-desc" hidden>{{ p.description | strip | escape }}</div>{% endif %}</figure>
 {% endif %}{% endfor %}
     </div>
   </div>
 </section>
+<dialog class="lightbox" id="lightbox" aria-labelledby="lb-title">
+  <div class="lb-card">
+    <div class="lb-stage" id="lb-stage">
+      <img class="lb-img" id="lb-img" alt="" draggable="false">
+      <video class="lb-video" id="lb-video" controls playsinline loop hidden></video>
+      <div class="lb-zoom" id="lb-zoom">
+        <button type="button" data-zoom="out" aria-label="Σμίκρυνση" title="Σμίκρυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+        <button type="button" data-zoom="in" aria-label="Μεγέθυνση" title="Μεγέθυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
+      </div>
+      <button class="lb-nav lb-prev" type="button" aria-label="Προηγούμενη δημιουργία"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+      <button class="lb-nav lb-next" type="button" aria-label="Επόμενη δημιουργία"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+    </div>
+    <div class="lb-info">
+      <p class="lb-cat" id="lb-cat"></p>
+      <h2 id="lb-title"></h2>
+      <hr class="rule">
+      <div class="lb-desc" id="lb-desc"></div>
+      <a class="btn" id="lb-cta" href="epikoinonia.html">Θέλω κάτι παρόμοιο <span class="arrow">&rarr;</span></a>
+      <p class="lb-hint" id="lb-hint"></p>
+    </div>
+    <button class="lb-close" type="button" aria-label="Κλείσιμο" title="Κλείσιμο"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  </div>
+</dialog>
 <section class="cta-section">
   <div class="container">
     <div class="cta">

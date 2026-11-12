@@ -30,6 +30,7 @@ const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin/admin.js
 const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
 const MAX_TITLE = 80;
+const MAX_DESCRIPTION = 1500; // keep in sync with admin/admin.js
 const SESSION_DAYS = 30;
 
 class HttpError extends Error {
@@ -127,17 +128,18 @@ async function getContent(gh, cfg) {
   };
 }
 
-/** Add a new photo at the top of the gallery. Body: { image (base64), title, category } */
+/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description } */
 async function addGalleryPhoto(request, gh) {
   const body = await readJson(request);
   const title = cleanTitle(body.title);
   const category = cleanCategory(body.category);
+  const description = cleanDescription(body.description);
   const image = decodeImage(body.image);
 
   return gh.withRetry(async () => {
     const gallery = await gh.readJson(GALLERY_PATH);
     const path = newImagePath(image.ext);
-    const list = [{ image: "/" + path, title, category }, ...asList(gallery.data)];
+    const list = [withDescription({ image: "/" + path, title, category }, description), ...asList(gallery.data)];
     await gh.commit(`Προσθήκη φωτογραφίας: ${title}`, [
       { path, base64: image.base64 },
       { path: GALLERY_PATH, text: toJson(list) },
@@ -161,11 +163,12 @@ async function uploadBlob(request, gh) {
   return { sha: blob.sha };
 }
 
-/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category } */
+/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description } */
 async function addGalleryVideo(request, gh) {
   const body = await readJson(request);
   const title = cleanTitle(body.title);
   const category = cleanCategory(body.category);
+  const description = cleanDescription(body.description);
   const blob = String(body.blob || "");
   if (!/^[0-9a-f]{40}$/.test(blob)) throw new HttpError(400, "Το βίντεο δεν ανέβηκε σωστά. Δοκίμασε ξανά.");
   const ext = String(body.ext || "").toLowerCase();
@@ -176,7 +179,7 @@ async function addGalleryVideo(request, gh) {
     const gallery = await gh.readJson(GALLERY_PATH);
     const videoPath = newImagePath(ext);
     const posterPath = poster ? videoPath.replace(/\.[a-z0-9]+$/, "-poster." + poster.ext) : null;
-    const item = { video: "/" + videoPath, image: posterPath ? "/" + posterPath : "", title, category };
+    const item = withDescription({ video: "/" + videoPath, image: posterPath ? "/" + posterPath : "", title, category }, description);
     const list = [item, ...asList(gallery.data)];
     const files = [{ path: videoPath, sha: blob }, { path: GALLERY_PATH, text: toJson(list) }];
     if (poster) files.push({ path: posterPath, base64: poster.base64 });
@@ -185,7 +188,7 @@ async function addGalleryVideo(request, gh) {
   });
 }
 
-/** Save the whole gallery list (edit titles/categories, reorder, delete). Body: { gallery, version } */
+/** Save the whole gallery list (edit titles/categories/descriptions, reorder, delete). Body: { gallery, version } */
 async function saveGallery(request, gh) {
   const body = await readJson(request);
   if (!Array.isArray(body.gallery)) throw new HttpError(400, "Λάθος δεδομένα.");
@@ -199,7 +202,7 @@ async function saveGallery(request, gh) {
   const list = body.gallery.map((p) => {
     const saved = p && byKey.get(itemKey(p));
     if (!saved) throw new HttpError(400, "Άγνωστη φωτογραφία στη λίστα. Ανανέωσε τη σελίδα.");
-    const item = { image: saved.image, title: cleanTitle(p.title), category: cleanCategory(p.category) };
+    const item = withDescription({ image: saved.image, title: cleanTitle(p.title), category: cleanCategory(p.category) }, cleanDescription(p.description));
     return saved.video ? { video: saved.video, ...item } : item;
   });
 
@@ -348,6 +351,20 @@ function cleanTitle(title) {
   if (!t) throw new HttpError(400, "Γράψε έναν τίτλο.");
   if (t.length > MAX_TITLE) throw new HttpError(400, `Ο τίτλος είναι πολύ μεγάλος (έως ${MAX_TITLE} χαρακτήρες).`);
   return t;
+}
+
+function cleanDescription(description) {
+  const d = String(description ?? "")
+    .replace(/\r\n?/g, "\n")
+    .split("\n").map((line) => line.replace(/[ \t]+/g, " ").trim()).join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  if (d.length > MAX_DESCRIPTION) throw new HttpError(400, `Η περιγραφή είναι πολύ μεγάλη (έως ${MAX_DESCRIPTION} χαρακτήρες).`);
+  return d;
+}
+
+function withDescription(item, description) {
+  return description ? { ...item, description } : item;
 }
 
 function cleanCategory(category) {

@@ -16,6 +16,8 @@
   const TOKEN_KEY = "balloona-admin-token";
   const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin-server/worker.js
   const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
+  const MAX_DESCRIPTION = 1500; // keep in sync with admin-server/worker.js
+  const OLD_SERVER = "Οι περιγραφές δεν αποθηκεύτηκαν: ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
 
   const $ = (id) => document.getElementById(id);
   const store = {
@@ -119,6 +121,7 @@
           <div class="item-fields">
             <input data-field="title" value="${esc(p.title)}" maxlength="80" aria-label="Τίτλος">
             <select data-field="category" aria-label="Κατηγορία">${categoryOptions(p.category)}</select>
+            <textarea data-field="description" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Περιγραφή (προαιρετικό)" aria-label="Περιγραφή">${esc(p.description)}</textarea>
           </div>
           <div class="item-actions">
             <button class="icon-btn" data-act="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
@@ -127,15 +130,37 @@
           </div>
         </li>`).join("");
     }
+    list.querySelectorAll("textarea").forEach(grow);
     $("savebar").hidden = !dirty();
+  }
+
+  // Let a description box grow with its text
+  function grow(t) {
+    if (!t.offsetParent) return; // not visible (other tab): measured again when shown
+    t.style.height = "auto";
+    t.style.height = t.scrollHeight + 2 + "px";
   }
 
   $("list").addEventListener("input", (e) => {
     const li = e.target.closest(".item");
     if (!li) return;
-    state.gallery[+li.dataset.i][e.target.dataset.field] = e.target.value;
+    const item = state.gallery[+li.dataset.i];
+    const field = e.target.dataset.field;
+    if (field === "description") {
+      grow(e.target);
+      if (e.target.value.trim()) item.description = e.target.value;
+      else delete item.description;
+    } else {
+      item[field] = e.target.value;
+    }
     $("savebar").hidden = !dirty();
   });
+
+  // An older server silently drops descriptions: warn instead of pretending they were saved
+  function descriptionsLost(sent, saved) {
+    const kept = new Map((saved || []).map((p) => [p.video || p.image, p]));
+    return sent.some((p) => (p.description || "").trim() && !(kept.get(p.video || p.image) || {}).description);
+  }
 
   $("list").addEventListener("click", (e) => {
     const btn = e.target.closest("button[data-act]");
@@ -160,9 +185,11 @@
     btn.disabled = true;
     btn.textContent = "Αποθήκευση…";
     try {
-      await api("PUT", "/gallery", { gallery: state.gallery, version: state.version });
+      const res = await api("PUT", "/gallery", { gallery: state.gallery, version: state.version });
+      const lost = descriptionsLost(state.gallery, res.gallery);
       await load();
-      toast("Αποθηκεύτηκε! Το site θα ενημερωθεί σε 1–2 λεπτά.");
+      if (lost) toast(OLD_SERVER, true);
+      else toast("Αποθηκεύτηκε! Το site θα ενημερωθεί σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
     } finally {
@@ -237,19 +264,23 @@
     btn.textContent = "Ανέβασμα…";
     const title = $("add-title").value;
     const category = $("add-category").value;
+    const description = $("add-description").value;
     try {
+      let res;
       if (addVideo) {
         const sha = await uploadVideoBlob(addVideo.file, (pct) => { btn.textContent = `Ανέβασμα… ${pct}%`; });
         btn.textContent = "Αποθήκευση…";
-        await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category });
+        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description });
       } else {
-        await api("POST", "/gallery/photo", { image: addImage, title, category });
+        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description });
       }
       const wasVideo = !!addVideo;
+      const lost = description.trim() && !((res.gallery || [])[0] || {}).description;
       $("add-form").reset();
       resetAdd();
       await load();
-      toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
+      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά η περιγραφή δεν αποθηκεύτηκε: " : "Η φωτογραφία ανέβηκε, αλλά η περιγραφή δεν αποθηκεύτηκε: ") + "ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.", true);
+      else toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
     } finally {
@@ -395,6 +426,7 @@
       t.setAttribute("aria-selected", on);
       $("tab-" + t.dataset.tab).hidden = !on;
     });
+    $("list").querySelectorAll("textarea").forEach(grow);
   }));
 
   /* ---------- Login ---------- */
