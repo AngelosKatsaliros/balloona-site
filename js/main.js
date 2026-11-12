@@ -12,7 +12,7 @@ if (toggle && nav) {
 const y = document.getElementById('year');
 if (y) y.textContent = new Date().getFullYear();
 
-// Gallery filters (also reacts to #dora, #genethlia, #vaptiseis in the URL)
+// Gallery filters (also reacts to a category in the URL, e.g. #dora; categories live in _data/categories.json)
 const filters = document.querySelectorAll('.filter');
 function applyFilter(cat) {
   filters.forEach(b => b.classList.toggle('active', b.dataset.filter === cat));
@@ -316,7 +316,8 @@ const wanted = params.get('gia');
 const msgField = document.getElementById('message');
 if (wanted && msgField && !msgField.value) {
   msgField.value = `Ενδιαφέρομαι για κάτι σαν «${wanted.slice(0, 120)}» από τις Δημιουργίες.\n`;
-  const typeIndex = { dora: 0, genethlia: 1, vaptiseis: 2 }[params.get('cat')];
+  // Newer categories (added from /admin) count as «Άλλη εκδήλωση»
+  const typeIndex = params.get('cat') ? { dora: 0, genethlia: 1, vaptiseis: 2 }[params.get('cat')] ?? 3 : null;
   const typeField = document.getElementById('type');
   if (typeField && typeIndex != null) typeField.selectedIndex = typeIndex;
 }

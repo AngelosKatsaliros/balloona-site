@@ -23,8 +23,20 @@ const DEFAULTS = {
 
 const GALLERY_PATH = "_data/gallery.json";
 const HOME_PATH = "_data/home.json";
+const CATEGORIES_PATH = "_data/categories.json";
 const UPLOAD_DIR = "images/uploads";
-const CATEGORIES = ["dora", "genethlia", "vaptiseis"];
+// Used until _data/categories.json exists
+const DEFAULT_CATEGORIES = [
+  { id: "dora", name: "Προσωποποιημένα δώρα" },
+  { id: "genethlia", name: "Γενέθλια" },
+  { id: "vaptiseis", name: "Βαπτίσεις & εκδηλώσεις" },
+];
+// The home page links to these, so they can be renamed but not deleted
+const PROTECTED_CATEGORIES = ["dora", "genethlia", "vaptiseis"];
+// Ids that are already used on the Δημιουργίες page or by the filters
+const RESERVED_IDS = ["all", "nav", "year", "lightbox", "main", "message", "type"];
+const MAX_CATEGORIES = 20;
+const MAX_CATEGORY_NAME = 40;
 const HOME_SLOTS = ["hero", "gift", "birthday", "baptism", "about"];
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin/admin.js
@@ -76,6 +88,7 @@ export default {
         else if (route === "POST /gallery/video") result = await addGalleryVideo(request, gh);
         else if (route === "POST /gallery/media") result = await addItemMedia(request, gh);
         else if (route === "PUT /gallery") result = await saveGallery(request, gh);
+        else if (route === "PUT /categories") result = await saveCategories(request, gh);
         else if (route === "POST /home/photo") result = await replaceHomePhoto(request, gh);
         else throw new HttpError(404, "Δεν βρέθηκε.");
       }
@@ -121,10 +134,12 @@ async function requireSession(request, env) {
 }
 
 async function getContent(gh, cfg) {
-  const [gallery, home] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH)]);
+  const [gallery, home, categories] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH), readCategories(gh)]);
   return {
     gallery: gallery.data,
     home: home.data,
+    categories: categories.data,
+    categoriesVersion: categories.sha,
     version: versionOf(gallery.sha, home.sha),
     rawBase: `https://raw.githubusercontent.com/${cfg.GITHUB_REPO}/${cfg.GITHUB_BRANCH}/`,
   };
@@ -134,7 +149,7 @@ async function getContent(gh, cfg) {
 async function addGalleryPhoto(request, gh) {
   const body = await readJson(request);
   const title = cleanTitle(body.title);
-  const category = cleanCategory(body.category);
+  const category = cleanCategory(body.category, (await readCategories(gh)).data);
   const description = cleanDescription(body.description);
   const image = decodeImage(body.image);
 
@@ -169,7 +184,7 @@ async function uploadBlob(request, gh) {
 async function addGalleryVideo(request, gh) {
   const body = await readJson(request);
   const title = cleanTitle(body.title);
-  const category = cleanCategory(body.category);
+  const category = cleanCategory(body.category, (await readCategories(gh)).data);
   const description = cleanDescription(body.description);
   const blob = String(body.blob || "");
   if (!/^[0-9a-f]{40}$/.test(blob)) throw new HttpError(400, "Το βίντεο δεν ανέβηκε σωστά. Δοκίμασε ξανά.");
@@ -247,7 +262,7 @@ async function saveGallery(request, gh) {
   const body = await readJson(request);
   if (!Array.isArray(body.gallery)) throw new HttpError(400, "Λάθος δεδομένα.");
 
-  const [gallery, home] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH)]);
+  const [gallery, home, categories] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH), readCategories(gh)]);
   if (body.version && body.version !== versionOf(gallery.sha, home.sha)) {
     throw new HttpError(409, "Έγιναν αλλαγές από άλλη συσκευή. Ανανέωσε τη σελίδα και ξαναδοκίμασε.");
   }
@@ -274,7 +289,7 @@ async function saveGallery(request, gh) {
     const [cover, ...rest] = media;
     const item = { ...(cover.video ? { video: cover.video } : {}), image: cover.image || "" };
     item.title = cleanTitle(p.title);
-    item.category = cleanCategory(p.category);
+    item.category = cleanCategory(p.category, categories.data);
     const description = cleanDescription(p.description);
     if (description) item.description = description;
     if (rest.length) item.more = rest;
@@ -289,6 +304,59 @@ async function saveGallery(request, gh) {
   const files = [{ path: GALLERY_PATH, text: toJson(list) }, ...removed.map((f) => ({ path: f.slice(1), remove: true }))];
   await gh.commit("Ενημέρωση Δημιουργιών", files);
   return { ok: true, gallery: list };
+}
+
+/**
+ * Save the list of categories (add, rename, reorder, delete). Body: { categories: [{ id?, name }], version }
+ * Existing ids never change, so links keep working after a rename. New ones get an id made from the name.
+ */
+async function saveCategories(request, gh) {
+  const body = await readJson(request);
+  if (!Array.isArray(body.categories)) throw new HttpError(400, "Λάθος δεδομένα.");
+  const [current, gallery] = await Promise.all([readCategories(gh), gh.readJson(GALLERY_PATH)]);
+  if (body.version && current.sha && body.version !== current.sha) {
+    throw new HttpError(409, "Έγιναν αλλαγές από άλλη συσκευή. Ανανέωσε τη σελίδα και ξαναδοκίμασε.");
+  }
+  if (!body.categories.length) throw new HttpError(400, "Χρειάζεται τουλάχιστον μία κατηγορία.");
+  if (body.categories.length > MAX_CATEGORIES) throw new HttpError(400, `Έως ${MAX_CATEGORIES} κατηγορίες.`);
+
+  const existing = new Map(current.data.map((c) => [c.id, c]));
+  const names = new Set();
+  const ids = new Set();
+  const list = body.categories.map((c) => {
+    const name = String((c && c.name) || "").replace(/\s+/g, " ").trim();
+    if (!name) throw new HttpError(400, "Κάθε κατηγορία χρειάζεται όνομα.");
+    if (name.length > MAX_CATEGORY_NAME) throw new HttpError(400, `Το όνομα «${name.slice(0, 20)}…» είναι πολύ μεγάλο (έως ${MAX_CATEGORY_NAME} χαρακτήρες).`);
+    const lower = name.toLocaleLowerCase("el");
+    if (names.has(lower)) throw new HttpError(400, `Η κατηγορία «${name}» υπάρχει δύο φορές.`);
+    names.add(lower);
+    const id = c && existing.has(c.id) && !ids.has(c.id) ? c.id : null;
+    if (id) ids.add(id);
+    return { id, name };
+  });
+  // New categories get an id after the existing ones are known, so they never take an existing id
+  for (const c of list) {
+    if (c.id) continue;
+    const base = slugify(c.name) || "katigoria";
+    let id = base;
+    for (let n = 2; ids.has(id) || existing.has(id) || RESERVED_IDS.includes(id) || id.startsWith("lb-"); n++) id = `${base}-${n}`;
+    ids.add(id);
+    c.id = id;
+  }
+
+  // Deleted categories must be empty, and the ones the home page links to stay
+  for (const old of current.data) {
+    if (ids.has(old.id)) continue;
+    if (PROTECTED_CATEGORIES.includes(old.id)) {
+      throw new HttpError(400, `Η κατηγορία «${old.name}» συνδέεται με την αρχική σελίδα και δεν σβήνεται. Μπορείς να της αλλάξεις όνομα.`);
+    }
+    const n = asList(gallery.data).filter((p) => p.category === old.id).length;
+    if (n) throw new HttpError(400, `Η κατηγορία «${old.name}» έχει ${n === 1 ? "1 δημιουργία" : `${n} δημιουργίες`}. Άλλαξε πρώτα την κατηγορία τους.`);
+  }
+
+  await gh.commit("Ενημέρωση κατηγοριών", [{ path: CATEGORIES_PATH, text: toJson(list) }]);
+  const saved = await readCategories(gh);
+  return { ok: true, categories: saved.data, categoriesVersion: saved.sha };
 }
 
 /** Replace one of the home page photos. Body: { slot, image (base64) } */
@@ -398,6 +466,18 @@ class GitHub {
   }
 }
 
+/** The categories file, or the original three if it does not exist yet */
+async function readCategories(gh) {
+  try {
+    const file = await gh.readJson(CATEGORIES_PATH);
+    const data = asList(file.data).filter((c) => c && typeof c.id === "string" && typeof c.name === "string");
+    return { data: data.length ? data : DEFAULT_CATEGORIES, sha: file.sha };
+  } catch (err) {
+    if (err.github && err.github.status === 404) return { data: DEFAULT_CATEGORIES, sha: "" };
+    throw err;
+  }
+}
+
 /* ---------------- Helpers ---------------- */
 
 function json(data, status, headers) {
@@ -442,10 +522,28 @@ function withDescription(item, description) {
   return description ? { ...item, description } : item;
 }
 
-function cleanCategory(category) {
+function cleanCategory(category, categories) {
   const c = String(category || "");
-  if (!CATEGORIES.includes(c)) throw new HttpError(400, "Διάλεξε κατηγορία.");
+  if (!categories.some((x) => x.id === c)) throw new HttpError(400, "Διάλεξε κατηγορία.");
   return c;
+}
+
+/** Latin letters for a web address, e.g. "Γενέθλια" -> "genethlia" */
+function slugify(name) {
+  const GREEK = {
+    α: "a", β: "v", γ: "g", δ: "d", ε: "e", ζ: "z", η: "i", θ: "th", ι: "i", κ: "k", λ: "l", μ: "m", ν: "n", ξ: "x",
+    ο: "o", π: "p", ρ: "r", σ: "s", ς: "s", τ: "t", υ: "y", φ: "f", χ: "ch", ψ: "ps", ω: "o",
+  };
+  return String(name)
+    .toLocaleLowerCase("el")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ου/g, "ou")
+    .replace(/[α-ω]/g, (ch) => GREEK[ch] || "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/, "");
 }
 
 function decodeImage(dataUrlOrBase64) {

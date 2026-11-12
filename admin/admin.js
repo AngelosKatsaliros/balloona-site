@@ -1,9 +1,12 @@
 (() => {
-  const CATEGORIES = [
-    { value: "dora", label: "Προσωποποιημένα δώρα" },
-    { value: "genethlia", label: "Γενέθλια" },
-    { value: "vaptiseis", label: "Βαπτίσεις & εκδηλώσεις" },
+  // Used only with a server from before editable categories
+  const DEFAULT_CATEGORIES = [
+    { id: "dora", name: "Προσωποποιημένα δώρα" },
+    { id: "genethlia", name: "Γενέθλια" },
+    { id: "vaptiseis", name: "Βαπτίσεις & εκδηλώσεις" },
   ];
+  const PROTECTED_CATEGORIES = ["dora", "genethlia", "vaptiseis"]; // the home page links to these
+  const MAX_CATEGORIES = 20;
   const HOME_SLOTS = [
     { key: "hero", label: "Μεγάλη φωτογραφία στην κορυφή" },
     { key: "gift", label: "Κάρτα «Προσωποποιημένα δώρα»" },
@@ -29,7 +32,7 @@
 
   const API = (window.BALLOONA_ADMIN_API || "").replace(/\/+$/, "");
   let token = store.get(TOKEN_KEY);
-  let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "" };
+  let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "", categories: [], savedCategories: [], categoriesVersion: "" };
   let addImage = null; // data URL of the resized photo to add
   let addVideo = null; // { file, ext, poster } of the video to add
   const DROP_TEXT = "<strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small>";
@@ -82,8 +85,9 @@
     return state.rawBase + path.replace(/^\//, "");
   }
 
+  // Creations can only use saved categories (a new one needs «Αποθήκευση» first)
   function categoryOptions(selected) {
-    return CATEGORIES.map((c) => `<option value="${c.value}"${c.value === selected ? " selected" : ""}>${c.label}</option>`).join("");
+    return state.savedCategories.map((c) => `<option value="${esc(c.id)}"${c.id === selected ? " selected" : ""}>${esc(c.name)}</option>`).join("");
   }
 
   function esc(s) {
@@ -91,15 +95,22 @@
   }
 
   /* ---------- Load ---------- */
-  async function load() {
+  async function load({ keepCategories = false } = {}) {
     const data = await api("GET", "/content");
+    if (!keepCategories) {
+      state.savedCategories = data.categories || DEFAULT_CATEGORIES;
+      state.categories = state.savedCategories.map((c) => ({ ...c }));
+      state.categoriesVersion = data.categoriesVersion || "";
+    }
     state.savedData = JSON.stringify(data.gallery);
     state.gallery = JSON.parse(state.savedData);
     state.saved = canon(data.gallery);
     state.home = data.home;
     state.version = data.version;
     state.rawBase = data.rawBase;
+    renderAddCategories();
     renderGallery();
+    renderCategories();
     renderHome();
   }
 
@@ -108,8 +119,17 @@
     return JSON.stringify(list.map((p) => [p.title, p.category, (p.description || "").trim(), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
   }
 
-  function dirty() {
+  function galleryDirty() {
     return canon(state.gallery) !== state.saved;
+  }
+
+  function catsDirty() {
+    const strip = (list) => JSON.stringify(list.map((c) => [c.id || "", c.name.trim()]));
+    return strip(state.categories) !== strip(state.savedCategories);
+  }
+
+  function dirty() {
+    return galleryDirty() || catsDirty();
   }
 
   /* A creation's photos/videos: the cover (image/video fields of the item) first, then "more" */
@@ -242,18 +262,34 @@
     for (const p of state.gallery) {
       if (!p.title.trim()) return toast("Κάθε φωτογραφία και βίντεο χρειάζεται τίτλο.", true);
     }
+    const names = state.categories.map((c) => c.name.trim().toLocaleLowerCase("el"));
+    if (names.some((n) => !n)) return toast("Κάθε κατηγορία χρειάζεται όνομα.", true);
+    if (new Set(names).size !== names.length) return toast("Δύο κατηγορίες έχουν το ίδιο όνομα.", true);
     const btn = $("save");
     btn.disabled = true;
     btn.textContent = "Αποθήκευση…";
+    let gallerySaved = false;
     try {
-      const gallery = state.gallery.map((p) => ({ ...p, more: p.more || [] }));
-      const res = await api("PUT", "/gallery", { gallery, version: state.version });
-      const lost = descriptionsLost(state.gallery, res.gallery);
+      // Creations first: a category can only be deleted once nothing in it is left
+      let lost = false;
+      if (galleryDirty()) {
+        const gallery = state.gallery.map((p) => ({ ...p, more: p.more || [] }));
+        const res = await api("PUT", "/gallery", { gallery, version: state.version });
+        lost = descriptionsLost(state.gallery, res.gallery);
+        gallerySaved = true;
+      }
+      if (catsDirty()) {
+        await api("PUT", "/categories", {
+          categories: state.categories.map((c) => ({ id: c.id || "", name: c.name })),
+          version: state.categoriesVersion,
+        });
+      }
       await load();
       if (lost) toast(OLD_SERVER, true);
       else toast("Αποθηκεύτηκε! Το site θα ενημερωθεί σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
+      if (gallerySaved) { try { await load({ keepCategories: true }); } catch {} }
     } finally {
       btn.disabled = false;
       btn.textContent = "Αποθήκευση";
@@ -262,7 +298,72 @@
 
   $("discard").addEventListener("click", () => {
     state.gallery = JSON.parse(state.savedData);
+    state.categories = state.savedCategories.map((c) => ({ ...c }));
     renderGallery();
+    renderCategories();
+  });
+
+  /* ---------- Categories ---------- */
+  function renderAddCategories() {
+    const sel = $("add-category");
+    const value = sel.value;
+    sel.innerHTML = `<option value="">Διάλεξε…</option>` + categoryOptions(value);
+  }
+
+  function renderCategories() {
+    const counts = {};
+    for (const p of state.gallery) counts[p.category] = (counts[p.category] || 0) + 1;
+    const cats = state.categories;
+    $("cat-list").innerHTML = cats.map((c, i) => {
+      const n = c.id ? counts[c.id] || 0 : 0;
+      const locked = PROTECTED_CATEGORIES.includes(c.id);
+      const why = locked ? "Η αρχική σελίδα συνδέεται με αυτή την κατηγορία, οπότε δεν σβήνεται" : n ? "Άλλαξε πρώτα την κατηγορία των δημιουργιών της" : "Διαγραφή";
+      return `
+        <li class="cat-row" data-i="${i}">
+          <input data-cat-name value="${esc(c.name)}" maxlength="40" aria-label="Όνομα κατηγορίας">
+          <span class="cat-count muted">${!c.id ? `<span class="new">Νέα</span>` : n === 0 ? "καμία δημιουργία" : n === 1 ? "1 δημιουργία" : `${n} δημιουργίες`}</span>
+          <div class="item-actions">
+            <button class="icon-btn" data-cact="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
+            <button class="icon-btn" data-cact="down" title="Μετακίνηση κάτω" aria-label="Μετακίνηση κάτω" ${i === cats.length - 1 ? "disabled" : ""}>↓</button>
+            <button class="icon-btn danger" data-cact="delete" title="${why}" aria-label="${why}" ${locked || n ? "disabled" : ""}>🗑</button>
+          </div>
+        </li>`;
+    }).join("");
+    $("cat-add").hidden = cats.length >= MAX_CATEGORIES;
+    $("savebar").hidden = !dirty();
+  }
+
+  $("cat-list").addEventListener("input", (e) => {
+    if (!e.target.matches("[data-cat-name]")) return;
+    state.categories[+e.target.closest(".cat-row").dataset.i].name = e.target.value;
+    $("savebar").hidden = !dirty();
+  });
+
+  $("cat-list").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-cact]");
+    if (!btn) return;
+    const i = +btn.closest(".cat-row").dataset.i;
+    const c = state.categories;
+    if (btn.dataset.cact === "up" && i > 0) [c[i - 1], c[i]] = [c[i], c[i - 1]];
+    if (btn.dataset.cact === "down" && i < c.length - 1) [c[i + 1], c[i]] = [c[i], c[i + 1]];
+    if (btn.dataset.cact === "delete") {
+      if (!confirm(`Να σβηστεί η κατηγορία «${c[i].name}»;\n\nΘα σβηστεί όταν πατήσεις «Αποθήκευση».`)) return;
+      c.splice(i, 1);
+    }
+    renderCategories();
+  });
+
+  $("cat-add").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = $("cat-new").value.replace(/\s+/g, " ").trim();
+    if (!name) return toast("Γράψε ένα όνομα για τη νέα κατηγορία.", true);
+    if (state.categories.some((c) => c.name.trim().toLocaleLowerCase("el") === name.toLocaleLowerCase("el"))) {
+      return toast(`Η κατηγορία «${name}» υπάρχει ήδη.`, true);
+    }
+    state.categories.push({ id: "", name });
+    $("cat-new").value = "";
+    renderCategories();
+    toast("Πάτα «Αποθήκευση» κάτω για να μπει η κατηγορία. Μετά θα μπορείς να τη διαλέγεις για τις δημιουργίες.");
   });
 
   /* ---------- More photos/videos of a creation ---------- */
@@ -311,7 +412,6 @@
   });
 
   /* ---------- Add photo ---------- */
-  $("add-category").insertAdjacentHTML("beforeend", categoryOptions(""));
 
   function resetAdd() {
     addImage = null;
@@ -532,6 +632,7 @@
       $("tab-" + t.dataset.tab).hidden = !on;
     });
     $("list").querySelectorAll("textarea").forEach(grow);
+    renderCategories();
   }));
 
   /* ---------- Login ---------- */

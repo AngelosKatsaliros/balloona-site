@@ -50,6 +50,7 @@
   <section id="view-app" hidden>
     <nav class="tabs" role="tablist">
       <button class="tab active" role="tab" data-tab="gallery" aria-selected="true">Δημιουργίες</button>
+      <button class="tab" role="tab" data-tab="categories" aria-selected="false">Κατηγορίες</button>
       <button class="tab" role="tab" data-tab="home" aria-selected="false">Αρχική σελίδα</button>
     </nav>
 
@@ -93,6 +94,19 @@
         <p class="muted small">Η πρώτη της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια. Η περιγραφή φαίνεται όταν κάποιος πατήσει τη φωτογραφία.</p>
         <p class="muted small">Με το <strong>+ Προσθήκη</strong> κάτω από κάθε δημιουργία βάζεις κι άλλες φωτογραφίες ή βίντεο της (π.χ. από άλλη γωνία). Η «Κύρια» φαίνεται στη σελίδα· οι υπόλοιπες όταν την ανοίξει ο επισκέπτης.</p>
         <ul class="list" id="list"></ul>
+      </div>
+    </div>
+
+    <div id="tab-categories" hidden>
+      <div class="card">
+        <h2>Κατηγορίες</h2>
+        <p class="muted small">Εμφανίζονται ως κουμπιά φίλτρου στη σελίδα «Δημιουργίες», με αυτή τη σειρά. Μια κατηγορία φαίνεται στο site μόλις έχει τουλάχιστον μία δημιουργία.</p>
+        <ul class="list" id="cat-list"></ul>
+        <form class="cat-add" id="cat-add">
+          <input id="cat-new" maxlength="40" placeholder="Νέα κατηγορία, π.χ. Baby shower" aria-label="Όνομα νέας κατηγορίας">
+          <button class="btn" type="submit">+ Προσθήκη</button>
+        </form>
+        <p class="muted small">Για να μπει μια δημιουργία σε νέα κατηγορία: πρόσθεσε την κατηγορία, πάτα «Αποθήκευση» και μετά διάλεξέ τη στην καρτέλα «Δημιουργίες».</p>
       </div>
     </div>
 
