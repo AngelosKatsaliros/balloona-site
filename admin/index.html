@@ -55,12 +55,13 @@
 
     <div id="tab-gallery">
       <div class="card">
-        <h2>Νέα φωτογραφία</h2>
+        <h2>Νέα φωτογραφία ή βίντεο</h2>
         <form id="add-form" class="add-grid">
           <label class="drop" id="drop">
-            <input type="file" id="add-file" accept="image/*">
+            <input type="file" id="add-file" accept="image/*,video/*">
             <img id="add-preview" alt="" hidden>
-            <span id="drop-text"><strong>Πάτα για να διαλέξεις φωτογραφία</strong><br><small>ή σύρε την εδώ</small></span>
+            <video id="add-video-preview" muted loop playsinline hidden></video>
+            <span id="drop-text"><strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small></span>
           </label>
           <div class="add-fields">
             <label class="field">
@@ -73,6 +74,7 @@
                 <option value="">Διάλεξε…</option>
               </select>
             </label>
+            <p class="muted small" id="add-hint">Βίντεο έως 50 MB (περίπου 20–40 δευτερόλεπτα από κινητό).</p>
             <button class="btn" type="submit" id="add-btn">Ανέβασμα στο site</button>
           </div>
         </form>
@@ -80,10 +82,10 @@
 
       <div class="card">
         <div class="list-head">
-          <h2>Φωτογραφίες στη σελίδα «Δημιουργίες»</h2>
+          <h2>Στη σελίδα «Δημιουργίες»</h2>
           <span class="muted" id="count"></span>
         </div>
-        <p class="muted small">Η πρώτη φωτογραφία της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια.</p>
+        <p class="muted small">Η πρώτη της λίστας εμφανίζεται πρώτη στο site. Άλλαξε τη σειρά με τα βελάκια.</p>
         <ul class="list" id="list"></ul>
       </div>
     </div>

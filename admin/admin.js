@@ -14,6 +14,8 @@
   const MAX_SIDE = 1800;
   const JPEG_QUALITY = 0.82;
   const TOKEN_KEY = "balloona-admin-token";
+  const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin-server/worker.js
+  const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
 
   const $ = (id) => document.getElementById(id);
   const store = {
@@ -26,6 +28,8 @@
   let token = store.get(TOKEN_KEY);
   let state = { gallery: [], saved: [], home: {}, version: "", rawBase: "" };
   let addImage = null; // data URL of the resized photo to add
+  let addVideo = null; // { file, ext, poster } of the video to add
+  const DROP_TEXT = "<strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small>";
 
   /* ---------- API ---------- */
   async function api(method, path, body) {
@@ -100,13 +104,18 @@
   /* ---------- Gallery ---------- */
   function renderGallery() {
     const list = $("list");
-    $("count").textContent = state.gallery.length === 1 ? "1 φωτογραφία" : `${state.gallery.length} φωτογραφίες`;
+    const nVideos = state.gallery.filter((p) => p.video).length;
+    const nPhotos = state.gallery.length - nVideos;
+    $("count").textContent = [
+      nPhotos ? (nPhotos === 1 ? "1 φωτογραφία" : `${nPhotos} φωτογραφίες`) : "",
+      nVideos ? `${nVideos} βίντεο` : "",
+    ].filter(Boolean).join(", ");
     if (!state.gallery.length) {
       list.innerHTML = `<li class="empty">Δεν υπάρχουν ακόμη φωτογραφίες.</li>`;
     } else {
       list.innerHTML = state.gallery.map((p, i) => `
         <li class="item" data-i="${i}">
-          <img src="${esc(imgUrl(p.image))}" alt="" loading="lazy">
+          <div class="thumb">${p.image ? `<img src="${esc(imgUrl(p.image))}" alt="" loading="lazy">` : "▶"}${p.video ? `<span class="badge">▶ Βίντεο</span>` : ""}</div>
           <div class="item-fields">
             <input data-field="title" value="${esc(p.title)}" maxlength="80" aria-label="Τίτλος">
             <select data-field="category" aria-label="Κατηγορία">${categoryOptions(p.category)}</select>
@@ -136,7 +145,8 @@
     if (btn.dataset.act === "up" && i > 0) [g[i - 1], g[i]] = [g[i], g[i - 1]];
     if (btn.dataset.act === "down" && i < g.length - 1) [g[i + 1], g[i]] = [g[i], g[i + 1]];
     if (btn.dataset.act === "delete") {
-      if (!confirm(`Να αφαιρεθεί η φωτογραφία «${g[i].title}»;\n\nΘα σβηστεί από το site όταν πατήσεις «Αποθήκευση».`)) return;
+      const what = g[i].video ? "το βίντεο" : "η φωτογραφία";
+      if (!confirm(`Να αφαιρεθεί ${what} «${g[i].title}»;\n\nΘα σβηστεί από το site όταν πατήσεις «Αποθήκευση».`)) return;
       g.splice(i, 1);
     }
     renderGallery();
@@ -144,7 +154,7 @@
 
   $("save").addEventListener("click", async () => {
     for (const p of state.gallery) {
-      if (!p.title.trim()) return toast("Κάθε φωτογραφία χρειάζεται τίτλο.", true);
+      if (!p.title.trim()) return toast("Κάθε φωτογραφία και βίντεο χρειάζεται τίτλο.", true);
     }
     const btn = $("save");
     btn.disabled = true;
@@ -173,19 +183,41 @@
   /* ---------- Add photo ---------- */
   $("add-category").insertAdjacentHTML("beforeend", categoryOptions(""));
 
+  function resetAdd() {
+    addImage = null;
+    addVideo = null;
+    const vp = $("add-video-preview");
+    if (vp.src) { URL.revokeObjectURL(vp.src); vp.removeAttribute("src"); vp.load(); }
+    vp.hidden = true;
+    $("add-preview").hidden = true;
+    $("drop-text").hidden = false;
+    $("drop-text").innerHTML = DROP_TEXT;
+  }
+
   async function pickAddFile(file) {
     if (!file) return;
-    $("drop-text").innerHTML = "Επεξεργασία φωτογραφίας…";
+    resetAdd();
+    $("drop-text").innerHTML = "Επεξεργασία…";
     try {
-      addImage = await resizeImage(file);
-      $("add-preview").src = addImage;
-      $("add-preview").hidden = false;
+      if (isVideo(file)) {
+        if (file.size > MAX_VIDEO_BYTES) {
+          throw new Error(`Το βίντεο είναι ${Math.ceil(file.size / 1024 / 1024)} MB. Το μέγιστο είναι ${MAX_VIDEO_BYTES / 1024 / 1024} MB: κόψε το σε λιγότερα δευτερόλεπτα από το κινητό σου και ξαναδοκίμασε.`);
+        }
+        const ext = videoExt(file);
+        const poster = await videoPoster(file).catch(() => null);
+        addVideo = { file, ext, poster };
+        const vp = $("add-video-preview");
+        vp.src = URL.createObjectURL(file);
+        vp.hidden = false;
+        vp.play().catch(() => {});
+      } else {
+        addImage = await resizeImage(file);
+        $("add-preview").src = addImage;
+        $("add-preview").hidden = false;
+      }
       $("drop-text").hidden = true;
     } catch (err) {
-      addImage = null;
-      $("add-preview").hidden = true;
-      $("drop-text").hidden = false;
-      $("drop-text").innerHTML = "<strong>Πάτα για να διαλέξεις φωτογραφία</strong><br><small>ή σύρε την εδώ</small>";
+      resetAdd();
       toast(err.message, true);
     }
   }
@@ -198,24 +230,26 @@
 
   $("add-form").addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!addImage) return toast("Διάλεξε πρώτα μια φωτογραφία.", true);
+    if (!addImage && !addVideo) return toast("Διάλεξε πρώτα μια φωτογραφία ή ένα βίντεο.", true);
     if (dirty() && !confirm("Έχεις αλλαγές στη λίστα που δεν αποθηκεύτηκαν και θα χαθούν. Συνέχεια;")) return;
     const btn = $("add-btn");
     btn.disabled = true;
     btn.textContent = "Ανέβασμα…";
+    const title = $("add-title").value;
+    const category = $("add-category").value;
     try {
-      await api("POST", "/gallery/photo", {
-        image: addImage,
-        title: $("add-title").value,
-        category: $("add-category").value,
-      });
+      if (addVideo) {
+        const sha = await uploadVideoBlob(addVideo.file, (pct) => { btn.textContent = `Ανέβασμα… ${pct}%`; });
+        btn.textContent = "Αποθήκευση…";
+        await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category });
+      } else {
+        await api("POST", "/gallery/photo", { image: addImage, title, category });
+      }
+      const wasVideo = !!addVideo;
       $("add-form").reset();
-      addImage = null;
-      $("add-preview").hidden = true;
-      $("drop-text").hidden = false;
-      $("drop-text").innerHTML = "<strong>Πάτα για να διαλέξεις φωτογραφία</strong><br><small>ή σύρε την εδώ</small>";
+      resetAdd();
       await load();
-      toast("Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
+      toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
     } finally {
@@ -223,6 +257,79 @@
       btn.textContent = "Ανέβασμα στο site";
     }
   });
+
+  /* ---------- Videos ---------- */
+  function videoExt(file) {
+    const fromName = (file.name.split(".").pop() || "").toLowerCase();
+    if (VIDEO_EXTS.includes(fromName)) return fromName;
+    if (file.type === "video/quicktime") return "mov";
+    if (file.type === "video/webm") return "webm";
+    return "mp4";
+  }
+
+  function isVideo(file) {
+    return file.type.startsWith("video/") || VIDEO_EXTS.includes((file.name.split(".").pop() || "").toLowerCase());
+  }
+
+  // Grab a frame near the start of the video to use as its cover image
+  async function videoPoster(file) {
+    const url = URL.createObjectURL(file);
+    const v = document.createElement("video");
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = "auto";
+    v.src = url;
+    try {
+      await new Promise((resolve, reject) => {
+        v.onloadeddata = resolve;
+        v.onerror = reject;
+        setTimeout(reject, 15000);
+        v.load();
+      });
+      const t = Math.min(1, (v.duration || 2) / 3);
+      await new Promise((resolve) => { v.onseeked = resolve; setTimeout(resolve, 5000); v.currentTime = t; });
+      if (!v.videoWidth) throw new Error("no frame");
+      const scale = Math.min(1, 1200 / Math.max(v.videoWidth, v.videoHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(v.videoWidth * scale);
+      canvas.height = Math.round(v.videoHeight * scale);
+      canvas.getContext("2d").drawImage(v, 0, 0, canvas.width, canvas.height);
+      return canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  function readAsBase64(file) {
+    return new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).slice(String(r.result).indexOf(",") + 1));
+      r.onerror = () => reject(new Error("Το βίντεο δεν διαβάστηκε. Δοκίμασε ξανά."));
+      r.readAsDataURL(file);
+    });
+  }
+
+  // Step 1: send the video to the server, which passes it to GitHub. Returns the GitHub blob id.
+  async function uploadVideoBlob(file, onProgress) {
+    const b64 = await readAsBase64(file);
+    const body = new Blob(['{"content":"', b64, '","encoding":"base64"}'], { type: "application/json" });
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", API + "/upload/blob");
+      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
+      xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100))); };
+      xhr.onerror = () => reject(new Error("Το ανέβασμα διακόπηκε. Έλεγξε το internet και ξαναδοκίμασε."));
+      xhr.onload = () => {
+        let data = {};
+        try { data = JSON.parse(xhr.responseText); } catch {}
+        if (xhr.status === 401) { logout(); return reject(new Error(data.error || "Η σύνδεση έληξε. Συνδέσου ξανά.")); }
+        if (xhr.status < 200 || xhr.status >= 300 || !data.sha) return reject(new Error(data.error || "Το ανέβασμα απέτυχε. Δοκίμασε ξανά."));
+        resolve(data.sha);
+      };
+      xhr.send(body);
+    });
+  }
 
   /* ---------- Home photos ---------- */
   function renderHome() {

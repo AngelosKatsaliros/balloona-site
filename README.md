@@ -24,7 +24,8 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
 - Photos are listed in `_data/gallery.json` (Δημιουργίες page, in display order) and `_data/home.json`
   (home page and Στολισμοί). GitHub Pages builds the pages from these lists with Jekyll.
 - `admin/` is a Greek admin page at `/admin/`: log in with a password, upload a photo (resized in the
-  browser to max 1800px), set title and category, reorder, delete, and swap home page photos.
+  browser to max 1800px) or a video (max 50 MB, a cover frame is captured automatically), set title and
+  category, reorder, delete, and swap home page photos. Gallery videos play muted on a loop; a tap turns on sound.
 - `admin-server/worker.js` is a small Cloudflare Worker that checks the password and commits the changes
   to this repository. Setup steps: `admin-server/SETUP.md`.
 - `.github/workflows/optimize-images.yml` shrinks any oversized photo that reaches `images/uploads/`

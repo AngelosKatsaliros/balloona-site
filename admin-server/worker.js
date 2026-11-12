@@ -27,6 +27,8 @@ const UPLOAD_DIR = "images/uploads";
 const CATEGORIES = ["dora", "genethlia", "vaptiseis"];
 const HOME_SLOTS = ["hero", "gift", "birthday", "baptism", "about"];
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin/admin.js
+const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
 const MAX_TITLE = 80;
 const SESSION_DAYS = 30;
 
@@ -68,6 +70,8 @@ export default {
         await requireSession(request, env);
         if (route === "GET /content") result = await getContent(gh, cfg);
         else if (route === "POST /gallery/photo") result = await addGalleryPhoto(request, gh);
+        else if (route === "POST /upload/blob") result = await uploadBlob(request, gh);
+        else if (route === "POST /gallery/video") result = await addGalleryVideo(request, gh);
         else if (route === "PUT /gallery") result = await saveGallery(request, gh);
         else if (route === "POST /home/photo") result = await replaceHomePhoto(request, gh);
         else throw new HttpError(404, "Δεν βρέθηκε.");
@@ -142,6 +146,45 @@ async function addGalleryPhoto(request, gh) {
   });
 }
 
+/**
+ * Step 1 of a video upload: pass a large file straight through to GitHub as a blob.
+ * The body is GitHub's own blob JSON: {"content":"<base64>","encoding":"base64"}.
+ * It is streamed, not parsed, so big videos fit in the Worker's limits.
+ */
+async function uploadBlob(request, gh) {
+  const length = Number(request.headers.get("Content-Length") || 0);
+  if (!length) throw new HttpError(411, "Λείπει το μέγεθος του αρχείου.");
+  if (length > Math.ceil((MAX_VIDEO_BYTES * 4) / 3) + 1024) {
+    throw new HttpError(413, `Το βίντεο είναι πολύ μεγάλο (μέγιστο ${MAX_VIDEO_BYTES / 1024 / 1024} MB).`);
+  }
+  const blob = await gh.api("/git/blobs", { method: "POST", body: request.body, headers: { "Content-Length": String(length) } });
+  return { sha: blob.sha };
+}
+
+/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category } */
+async function addGalleryVideo(request, gh) {
+  const body = await readJson(request);
+  const title = cleanTitle(body.title);
+  const category = cleanCategory(body.category);
+  const blob = String(body.blob || "");
+  if (!/^[0-9a-f]{40}$/.test(blob)) throw new HttpError(400, "Το βίντεο δεν ανέβηκε σωστά. Δοκίμασε ξανά.");
+  const ext = String(body.ext || "").toLowerCase();
+  if (!VIDEO_EXTS.includes(ext)) throw new HttpError(400, "Υποστηρίζονται βίντεο MP4, MOV ή WEBM.");
+  const poster = body.poster ? decodeImage(body.poster) : null;
+
+  return gh.withRetry(async () => {
+    const gallery = await gh.readJson(GALLERY_PATH);
+    const videoPath = newImagePath(ext);
+    const posterPath = poster ? videoPath.replace(/\.[a-z0-9]+$/, "-poster." + poster.ext) : null;
+    const item = { video: "/" + videoPath, image: posterPath ? "/" + posterPath : "", title, category };
+    const list = [item, ...asList(gallery.data)];
+    const files = [{ path: videoPath, sha: blob }, { path: GALLERY_PATH, text: toJson(list) }];
+    if (poster) files.push({ path: posterPath, base64: poster.base64 });
+    await gh.commit(`Προσθήκη βίντεο: ${title}`, files);
+    return { ok: true, gallery: list };
+  });
+}
+
 /** Save the whole gallery list (edit titles/categories, reorder, delete). Body: { gallery, version } */
 async function saveGallery(request, gh) {
   const body = await readJson(request);
@@ -151,18 +194,22 @@ async function saveGallery(request, gh) {
   if (body.version && body.version !== versionOf(gallery.sha, home.sha)) {
     throw new HttpError(409, "Έγιναν αλλαγές από άλλη συσκευή. Ανανέωσε τη σελίδα και ξαναδοκίμασε.");
   }
-  const known = new Set(asList(gallery.data).map((p) => p.image));
+  const current = asList(gallery.data);
+  const byKey = new Map(current.map((p) => [itemKey(p), p]));
   const list = body.gallery.map((p) => {
-    if (!p || !known.has(p.image)) throw new HttpError(400, "Άγνωστη φωτογραφία στη λίστα. Ανανέωσε τη σελίδα.");
-    return { image: p.image, title: cleanTitle(p.title), category: cleanCategory(p.category) };
+    const saved = p && byKey.get(itemKey(p));
+    if (!saved) throw new HttpError(400, "Άγνωστη φωτογραφία στη λίστα. Ανανέωσε τη σελίδα.");
+    const item = { image: saved.image, title: cleanTitle(p.title), category: cleanCategory(p.category) };
+    return saved.video ? { video: saved.video, ...item } : item;
   });
 
-  // Delete image files that nothing uses any more
-  const stillUsed = new Set([...list.map((p) => p.image), ...Object.values(home.data || {})]);
-  const removed = [...known].filter((img) => !stillUsed.has(img) && isUpload(img));
+  // Delete photo/video files that nothing uses any more
+  const filesOf = (p) => [p.image, p.video].filter(Boolean);
+  const stillUsed = new Set([...list.flatMap(filesOf), ...Object.values(home.data || {})]);
+  const removed = [...new Set(current.flatMap(filesOf))].filter((f) => !stillUsed.has(f) && isUpload(f));
 
-  const files = [{ path: GALLERY_PATH, text: toJson(list) }, ...removed.map((img) => ({ path: img.slice(1), remove: true }))];
-  await gh.commit("Ενημέρωση φωτογραφιών Δημιουργιών", files);
+  const files = [{ path: GALLERY_PATH, text: toJson(list) }, ...removed.map((f) => ({ path: f.slice(1), remove: true }))];
+  await gh.commit("Ενημέρωση Δημιουργιών", files);
   return { ok: true, gallery: list };
 }
 
@@ -178,7 +225,7 @@ async function replaceHomePhoto(request, gh) {
     const path = newImagePath(image.ext);
     const old = home.data[slot];
     const next = { ...home.data, [slot]: "/" + path };
-    const stillUsed = new Set([...asList(gallery.data).map((p) => p.image), ...Object.values(next)]);
+    const stillUsed = new Set([...asList(gallery.data).flatMap((p) => [p.image, p.video]), ...Object.values(next)]);
     const files = [
       { path, base64: image.base64 },
       { path: HOME_PATH, text: toJson(next) },
@@ -207,6 +254,7 @@ class GitHub {
         "X-GitHub-Api-Version": "2022-11-28",
         "User-Agent": "balloona-admin",
         ...(init.body ? { "Content-Type": "application/json" } : {}),
+        ...(init.headers || {}),
       },
     });
     if (!res.ok) {
@@ -230,7 +278,7 @@ class GitHub {
     return { data: JSON.parse(text), sha: file.sha };
   }
 
-  /** One commit with several files. files: [{path, text} | {path, base64} | {path, remove: true}] */
+  /** One commit with several files. files: [{path, text} | {path, base64} | {path, sha} | {path, remove: true}] */
   async commit(message, files) {
     const ref = await this.api(`/git/ref/heads/${this.branch}`);
     const parentSha = ref.object.sha;
@@ -239,6 +287,8 @@ class GitHub {
     for (const f of files) {
       if (f.remove) {
         tree.push({ path: f.path, mode: "100644", type: "blob", sha: null });
+      } else if (f.sha) {
+        tree.push({ path: f.path, mode: "100644", type: "blob", sha: f.sha });
       } else {
         const blob = await this.api("/git/blobs", {
           method: "POST",
@@ -335,6 +385,10 @@ function newImagePath(ext) {
 
 function isUpload(img) {
   return typeof img === "string" && img.startsWith(`/${UPLOAD_DIR}/`) && !img.includes("..");
+}
+
+function itemKey(p) {
+  return (p && (p.video || p.image)) || "";
 }
 
 function asList(data) {

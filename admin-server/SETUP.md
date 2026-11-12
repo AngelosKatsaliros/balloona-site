@@ -32,6 +32,8 @@ Then open `https://angeloskatsaliros.github.io/balloona-site/admin/`, log in wit
 editor the address and the password.
 
 ## Later
+- **Updating the server code:** when `admin-server/worker.js` changes, open the worker in Cloudflare →
+  **Edit code**, replace everything with the new file, and click **Deploy**. The secrets stay as they are.
 - **Change the password:** edit the `ADMIN_PASSWORD` secret in Cloudflare. Everyone is logged out.
 - **Custom domain (e.g. balloona.gr):** it is already allowed. For any other address, add a plain variable
   `ALLOWED_ORIGINS` in Cloudflare with the site addresses, comma-separated.

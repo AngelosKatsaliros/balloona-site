@@ -29,6 +29,28 @@ if (filters.length) {
   }
 }
 
+// Gallery videos: play silently while on screen, tap for sound
+const videos = document.querySelectorAll('.gallery video');
+if (videos.length) {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io = !reduceMotion && 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries) => entries.forEach((e) => {
+        if (e.isIntersecting) e.target.play().catch(() => {});
+        else e.target.pause();
+      }), { threshold: 0.4 })
+    : null;
+  videos.forEach((v) => {
+    if (io) io.observe(v);
+    v.addEventListener('click', () => {
+      const turnOn = v.muted || v.paused;
+      videos.forEach((o) => { if (o !== v) { o.muted = true; o.closest('figure').classList.remove('sound'); } });
+      v.muted = !turnOn;
+      v.closest('figure').classList.toggle('sound', turnOn);
+      if (turnOn) v.play().catch(() => {});
+    });
+  });
+}
+
 // Request form: submit via fetch so the visitor stays on the page
 const form = document.getElementById('request-form');
 if (form) {

@@ -62,8 +62,8 @@
       <button class="filter" data-filter="vaptiseis" id="vaptiseis">Βαπτίσεις &amp; εκδηλώσεις</button>
     </div>
     <div class="gallery">
-{% for p in site.data.gallery %}{% if p.image %}
-      <figure data-cat="{{ p.category }}"><img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy"><figcaption>{{ p.title | escape }}<small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption></figure>
+{% for p in site.data.gallery %}{% if p.image or p.video %}
+      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}>{% if p.video %}<div class="media"><video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-label="{{ p.title | escape }}"></video><span class="sound-badge" aria-hidden="true"></span></div>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<figcaption>{{ p.title | escape }}<small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption></figure>
 {% endif %}{% endfor %}
     </div>
   </div>
