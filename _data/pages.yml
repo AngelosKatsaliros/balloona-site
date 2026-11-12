@@ -4,18 +4,18 @@ home:
   en: /en/
   de: /de/
 creations:
-  el: /dimiourgies.html
-  en: /en/creations.html
-  de: /de/kreationen.html
+  el: /dimiourgies
+  en: /en/creations
+  de: /de/kreationen
 decorations:
-  el: /stolismoi.html
-  en: /en/decorations.html
-  de: /de/dekorationen.html
+  el: /stolismoi
+  en: /en/decorations
+  de: /de/dekorationen
 about:
-  el: /gia-emena.html
-  en: /en/about.html
-  de: /de/ueber-mich.html
+  el: /gia-emena
+  en: /en/about
+  de: /de/ueber-mich
 contact:
-  el: /epikoinonia.html
-  en: /en/contact.html
-  de: /de/kontakt.html
+  el: /epikoinonia
+  en: /en/contact
+  de: /de/kontakt

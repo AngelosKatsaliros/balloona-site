@@ -15,6 +15,9 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
 - Every page uses `_layouts/default.html` (head, header with the ΕΛ/EN/DE switch, footer). The page's front
   matter sets `lang` (`el`, `en` or `de`) and `ref` (its key in `_data/pages.yml`, which lists each page's
   Greek, English and German address for the switch and the `hreflang` links).
+- Addresses have no `.html` (`/dimiourgies`, `/en/creations`, …): GitHub Pages serves `dimiourgies.html` for
+  `/dimiourgies`. All links, canonical/`hreflang` tags and `sitemap.xml` use these clean addresses; the old
+  `.html` addresses still open the same pages.
 - Shared texts (menu, buttons, form labels, the request-form email subject) are in `_data/i18n.yml`;
   texts of the lightbox and the form messages are at the top of `js/main.js` (`TEXTS`).
 - The page bodies are written out in each language; shared blocks live in `_includes/` (`gallery.html`,
