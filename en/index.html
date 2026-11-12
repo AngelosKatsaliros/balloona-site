@@ -1,0 +1,58 @@
+---
+layout: default
+lang: en
+ref: home
+title: "Balloona | Personalised balloons & decorations"
+description: "Balloona – Luxury balloon creations. Personalised bobo balloons, gifts and balloon decorations for birthdays, christenings and events."
+---
+<section class="hero" style="padding:0">
+  <div class="container hero-inner">
+    <div class="hero-copy">
+      <p class="eyebrow">Luxury Balloon Creations</p>
+      <h1>Little moments,<br>big joy!</h1>
+      <hr class="rule">
+      <p class="lead">Personalised balloons and decorations for your most beautiful moments.</p>
+      <div class="hero-actions">
+        <a class="btn" href="{% include url.html to="contact" %}">Request a quote <span class="arrow">&rarr;</span></a>
+        <a class="link-underline" href="{% include url.html to="creations" %}">See our creations</a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-media"><img src="{% include src.html path=site.data.home.hero %}" alt="A Balloona balloon creation" fetchpriority="high"></div>
+</section>
+
+<section>
+  <div class="container">
+    <h2 class="section-title">Creations for every occasion</h2>
+    <div class="cards">
+      <a class="card" href="{% include url.html to="creations" %}#dora">
+        <img src="{% include src.html path=site.data.home.gift %}" alt="Personalised gifts" loading="lazy">
+        <h3>Personalised gifts</h3>
+      </a>
+      <a class="card" href="{% include url.html to="creations" %}#genethlia">
+        <img src="{% include src.html path=site.data.home.birthday %}" alt="Birthday decoration" loading="lazy">
+        <h3>Birthdays</h3>
+      </a>
+      <a class="card" href="{% include url.html to="creations" %}#vaptiseis">
+        <img src="{% include src.html path=site.data.home.baptism %}" alt="Christening decoration" loading="lazy">
+        <h3>Christenings &amp; events</h3>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:8px">
+  <div class="container">
+    <h2 class="section-title">A few words about me</h2>
+    <div class="about">
+      <div class="about-img"><img src="{% include src.html path=site.data.home.about %}" alt="Elisavet in the Balloona workshop" loading="lazy"></div>
+      <div class="about-text">
+        <p>I'm an educator, and creativity and imagination are an essential part of my life! I love giving shape to small ideas and making things that bring smiles.</p>
+        <p>That's how I started making personalised bobo balloons, and Balloona was born: from my wish to turn imagination into one-of-a-kind gifts, full of love and care.</p>
+        <p>Every creation has its own little story — and I'm so happy to become part of yours!</p>
+        <div class="signature"><img src="{{ '/images/signature.png' | relative_url }}" alt="With love, Elisavet" width="300" height="86"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% include cta.html %}

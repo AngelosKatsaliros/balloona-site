@@ -73,6 +73,20 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--rose); outl
 .item-fields input, .item-fields select, .item-fields textarea { background: var(--white); }
 .item-fields textarea { grid-column: 1 / -1; font-size: 15px; padding: 8px 12px; overflow: hidden; }
 .item-actions { display: flex; gap: 6px; }
+.en-box { grid-column: 1 / -1; border: 1px solid var(--blush-2); border-radius: 8px; background: var(--white); }
+.en-box summary { cursor: pointer; padding: 8px 12px; font-size: 14px; font-weight: 600; color: var(--burgundy); list-style: none; min-height: 40px; display: flex; align-items: center; gap: 6px; }
+.en-box summary::before { content: ""; flex: none; width: 7px; height: 7px; margin: 0 4px 0 2px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .15s; }
+.en-box[open] summary::before { transform: rotate(45deg); }
+.en-box summary::-webkit-details-marker { display: none; }
+.en-box summary small { font-weight: 400; color: var(--muted); }
+.en-done { font-weight: 400; color: var(--ok); }
+.en-box[open] { padding-bottom: 10px; }
+.en-box > :not(summary) { margin-inline: 10px; }
+.en-box > input, .en-box > textarea { display: block; width: calc(100% - 20px); margin-bottom: 8px; background: var(--cream); }
+.en-box > textarea { font-size: 15px; padding: 8px 12px; overflow: hidden; margin-bottom: 0; }
+.add-fields .en-box { margin-bottom: 14px; }
+.add-fields .en-box .field { margin-top: 4px; }
+.add-fields .en-box > small { display: block; font-size: 13px; }
 .thumb .count { position: absolute; right: 4px; top: 4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: rgba(94, 22, 34, 0.85); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; }
 .strip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
 .mthumb { width: 72px; display: flex; flex-direction: column; gap: 3px; }
@@ -98,8 +112,11 @@ body.uploading .madd input, body.uploading .mtools button { pointer-events: none
 .icon-btn:hover:not(:disabled) { background: var(--blush); }
 .icon-btn:disabled { opacity: 0.35; cursor: default; }
 .icon-btn.danger { color: var(--danger); }
-.cat-row { display: grid; grid-template-columns: 1fr 150px auto; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--blush); border-radius: 10px; background: var(--cream); }
+.cat-row { display: grid; grid-template-columns: 1fr 1fr 130px auto; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--blush); border-radius: 10px; background: var(--cream); }
 .cat-row input { background: var(--white); }
+.lang-input { position: relative; display: block; min-width: 0; }
+.lang-input span { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 11px; font-weight: 600; letter-spacing: .05em; color: var(--muted); pointer-events: none; }
+.lang-input input { padding-left: 38px; }
 .cat-count { font-size: 14px; }
 .cat-count .new { display: inline-block; background: var(--gold); color: #fff; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 4px; }
 .cat-add { display: flex; gap: 10px; margin: 16px 0 6px; }
@@ -132,7 +149,7 @@ body.uploading .madd input, body.uploading .mtools button { pointer-events: none
   .item-actions { grid-column: 1 / -1; justify-content: flex-end; }
   .mtools button { height: 32px; }
   .cat-row { grid-template-columns: 1fr auto; }
-  .cat-row input { grid-column: 1 / -1; }
+  .cat-row .lang-input { grid-column: 1 / -1; }
   .cat-add { flex-direction: column; }
   .brand-sub { display: none; }
   .card { padding: 18px; }

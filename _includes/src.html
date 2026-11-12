@@ -1,1 +1,1 @@
-{{ include.path | prepend: '@' | replace: '@/', '' | remove: '@' }}
+{{ include.path | relative_url }}

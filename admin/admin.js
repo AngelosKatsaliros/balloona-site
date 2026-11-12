@@ -21,7 +21,7 @@
   const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
   const MAX_DESCRIPTION = 1500; // keep in sync with admin-server/worker.js
   const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin-server/worker.js
-  const OLD_SERVER = "Οι περιγραφές δεν αποθηκεύτηκαν: ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
+  const OLD_SERVER = ": ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
 
   const $ = (id) => document.getElementById(id);
   const store = {
@@ -35,6 +35,7 @@
   let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "", categories: [], savedCategories: [], categoriesVersion: "" };
   let addImage = null; // data URL of the resized photo to add
   let addVideo = null; // { file, ext, poster } of the video to add
+  const enOpen = new WeakSet(); // creations whose «Στα αγγλικά» box is open, kept open across redraws
   const DROP_TEXT = "<strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small>";
 
   /* ---------- API ---------- */
@@ -115,8 +116,9 @@
   }
 
   // Compare lists by content only (key order and empty fields do not count as changes)
+  const trim = (s) => String(s || "").trim();
   function canon(list) {
-    return JSON.stringify(list.map((p) => [p.title, p.category, (p.description || "").trim(), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
+    return JSON.stringify(list.map((p) => [p.title, trim(p.title_en), p.category, trim(p.description), trim(p.description_en), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
   }
 
   function galleryDirty() {
@@ -124,7 +126,7 @@
   }
 
   function catsDirty() {
-    const strip = (list) => JSON.stringify(list.map((c) => [c.id || "", c.name.trim()]));
+    const strip = (list) => JSON.stringify(list.map((c) => [c.id || "", c.name.trim(), trim(c.name_en)]));
     return strip(state.categories) !== strip(state.savedCategories);
   }
 
@@ -176,6 +178,11 @@
             <input data-field="title" value="${esc(p.title)}" maxlength="80" aria-label="Τίτλος">
             <select data-field="category" aria-label="Κατηγορία">${categoryOptions(p.category)}</select>
             <textarea data-field="description" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Περιγραφή (προαιρετικό)" aria-label="Περιγραφή">${esc(p.description)}</textarea>
+            <details class="en-box" data-en${enOpen.has(p) ? " open" : ""}>
+              <summary>Στα αγγλικά ${trim(p.title_en) || trim(p.description_en) ? `<span class="en-done">✓ ${trim(p.title_en) && trim(p.description_en) ? "τίτλος και περιγραφή" : trim(p.title_en) ? "τίτλος" : "περιγραφή"}</span>` : "<small>(προαιρετικό)</small>"}</summary>
+              <input data-field="title_en" value="${esc(p.title_en)}" maxlength="80" lang="en" placeholder="Τίτλος στα αγγλικά" aria-label="Τίτλος στα αγγλικά">
+              <textarea data-field="description_en" rows="2" maxlength="${MAX_DESCRIPTION}" lang="en" placeholder="Περιγραφή στα αγγλικά" aria-label="Περιγραφή στα αγγλικά">${esc(p.description_en)}</textarea>
+            </details>
             <div class="strip" aria-label="Φωτογραφίες και βίντεο της δημιουργίας">
               ${media.map((m, j) => `
               <div class="mthumb${j === 0 ? " cover" : ""}" data-j="${j}">
@@ -214,20 +221,32 @@
     const item = state.gallery[+li.dataset.i];
     const field = e.target.dataset.field;
     if (!field) return; // e.g. the "add photos" file input
-    if (field === "description") {
-      grow(e.target);
-      if (e.target.value.trim()) item.description = e.target.value;
-      else delete item.description;
-    } else {
+    if (e.target.tagName === "TEXTAREA") grow(e.target);
+    if (field === "title" || field === "category") {
       item[field] = e.target.value;
+    } else if (e.target.value.trim()) {
+      item[field] = e.target.value; // description, title_en, description_en: optional
+    } else {
+      delete item[field];
     }
     $("savebar").hidden = !dirty();
   });
 
-  // An older server silently drops descriptions: warn instead of pretending they were saved
-  function descriptionsLost(sent, saved) {
+  // Remember which «Στα αγγλικά» boxes are open ("toggle" does not bubble, so listen while capturing)
+  $("list").addEventListener("toggle", (e) => {
+    if (!e.target.matches || !e.target.matches("details[data-en]")) return;
+    const p = state.gallery[+e.target.closest(".item").dataset.i];
+    if (e.target.open) { enOpen.add(p); e.target.querySelectorAll("textarea").forEach(grow); }
+    else enOpen.delete(p);
+  }, true);
+
+  // An older server silently drops the texts it does not know: warn instead of pretending they were saved
+  function textsLost(sent, saved) {
     const kept = new Map((saved || []).map((p) => [p.video || p.image, p]));
-    return sent.some((p) => (p.description || "").trim() && !(kept.get(p.video || p.image) || {}).description);
+    const lost = (field) => sent.some((p) => trim(p[field]) && !(kept.get(p.video || p.image) || {})[field]);
+    if (lost("description")) return "Οι περιγραφές";
+    if (lost("title_en") || lost("description_en")) return "Τα αγγλικά κείμενα";
+    return "";
   }
 
   $("list").addEventListener("click", (e) => {
@@ -271,21 +290,23 @@
     let gallerySaved = false;
     try {
       // Creations first: a category can only be deleted once nothing in it is left
-      let lost = false;
+      let lost = "";
       if (galleryDirty()) {
         const gallery = state.gallery.map((p) => ({ ...p, more: p.more || [] }));
         const res = await api("PUT", "/gallery", { gallery, version: state.version });
-        lost = descriptionsLost(state.gallery, res.gallery);
+        lost = textsLost(state.gallery, res.gallery);
         gallerySaved = true;
       }
       if (catsDirty()) {
-        await api("PUT", "/categories", {
-          categories: state.categories.map((c) => ({ id: c.id || "", name: c.name })),
+        const res = await api("PUT", "/categories", {
+          categories: state.categories.map((c) => ({ id: c.id || "", name: c.name, name_en: trim(c.name_en) })),
           version: state.categoriesVersion,
         });
+        const withEn = (list) => list.filter((c) => trim(c.name_en)).length;
+        if (!lost && withEn(res.categories || []) < withEn(state.categories)) lost = "Τα αγγλικά ονόματα κατηγοριών";
       }
       await load();
-      if (lost) toast(OLD_SERVER, true);
+      if (lost) toast(lost + " δεν αποθηκεύτηκαν" + OLD_SERVER, true);
       else toast("Αποθηκεύτηκε! Το site θα ενημερωθεί σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
@@ -320,7 +341,8 @@
       const why = locked ? "Η αρχική σελίδα συνδέεται με αυτή την κατηγορία, οπότε δεν σβήνεται" : n ? "Άλλαξε πρώτα την κατηγορία των δημιουργιών της" : "Διαγραφή";
       return `
         <li class="cat-row" data-i="${i}">
-          <input data-cat-name value="${esc(c.name)}" maxlength="40" aria-label="Όνομα κατηγορίας">
+          <label class="lang-input"><span>ΕΛ</span><input data-cat-name value="${esc(c.name)}" maxlength="40" aria-label="Όνομα κατηγορίας"></label>
+          <label class="lang-input"><span>EN</span><input data-cat-name-en value="${esc(c.name_en)}" maxlength="40" lang="en" placeholder="Στα αγγλικά (προαιρετικό)" aria-label="Όνομα κατηγορίας στα αγγλικά"></label>
           <span class="cat-count muted">${!c.id ? `<span class="new">Νέα</span>` : n === 0 ? "καμία δημιουργία" : n === 1 ? "1 δημιουργία" : `${n} δημιουργίες`}</span>
           <div class="item-actions">
             <button class="icon-btn" data-cact="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
@@ -334,8 +356,10 @@
   }
 
   $("cat-list").addEventListener("input", (e) => {
-    if (!e.target.matches("[data-cat-name]")) return;
-    state.categories[+e.target.closest(".cat-row").dataset.i].name = e.target.value;
+    const c = state.categories[+e.target.closest(".cat-row").dataset.i];
+    if (e.target.matches("[data-cat-name]")) c.name = e.target.value;
+    else if (e.target.matches("[data-cat-name-en]")) c.name_en = e.target.value;
+    else return;
     $("savebar").hidden = !dirty();
   });
 
@@ -463,21 +487,25 @@
     const title = $("add-title").value;
     const category = $("add-category").value;
     const description = $("add-description").value;
+    const title_en = $("add-title-en").value;
+    const description_en = $("add-description-en").value;
     try {
       let res;
       if (addVideo) {
         const sha = await uploadVideoBlob(addVideo.file, (pct) => { btn.textContent = `Ανέβασμα… ${pct}%`; });
         btn.textContent = "Αποθήκευση…";
-        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description });
+        res = await api("POST", "/gallery/video", { blob: sha, ext: addVideo.ext, poster: addVideo.poster, title, category, description, title_en, description_en });
       } else {
-        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description });
+        res = await api("POST", "/gallery/photo", { image: addImage, title, category, description, title_en, description_en });
       }
       const wasVideo = !!addVideo;
-      const lost = description.trim() && !((res.gallery || [])[0] || {}).description;
+      const saved = (res.gallery || [])[0] || {};
+      const lost = trim(description) && !saved.description ? "η περιγραφή" : (trim(title_en) && !saved.title_en) || (trim(description_en) && !saved.description_en) ? "τα αγγλικά κείμενα" : "";
       $("add-form").reset();
+      $("add-en").open = false;
       resetAdd();
       await load();
-      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά η περιγραφή δεν αποθηκεύτηκε: " : "Η φωτογραφία ανέβηκε, αλλά η περιγραφή δεν αποθηκεύτηκε: ") + "ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.", true);
+      if (lost) toast((wasVideo ? "Το βίντεο ανέβηκε, αλλά " : "Η φωτογραφία ανέβηκε, αλλά ") + lost + (lost === "η περιγραφή" ? " δεν αποθηκεύτηκε" : " δεν αποθηκεύτηκαν") + OLD_SERVER, true);
       else toast(wasVideo ? "Το βίντεο ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά." : "Η φωτογραφία ανέβηκε! Θα φανεί στο site σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);

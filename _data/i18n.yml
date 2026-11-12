@@ -1,0 +1,85 @@
+# Texts shared by several pages, in each language
+el:
+  locale: el_GR
+  home_label: "Balloona – Αρχική"
+  menu: Μενού
+  main_menu: Κύριο μενού
+  nav:
+    home: Αρχική
+    creations: Δημιουργίες
+    decorations: Στολισμοί
+    about: Για εμένα
+    contact: Επικοινωνία
+  language: Γλώσσα
+  cta_title: Η δική σου ιδέα, η δική μας δημιουργία
+  cta_button: Στείλε μας το αίτημά σου
+  quote: Ζήτησε προσφορά
+  filter_label: Φίλτρο κατηγορίας
+  all: Όλες
+  similar: Θέλω κάτι παρόμοιο
+  zoom_in: Μεγέθυνση
+  zoom_out: Σμίκρυνση
+  previous: Προηγούμενη
+  next: Επόμενη
+  close: Κλείσιμο
+  media_group: Φωτογραφίες και βίντεο της δημιουργίας
+  form:
+    name: Ονοματεπώνυμο
+    phone: Τηλέφωνο
+    email: Email
+    date: Ημερομηνία εκδήλωσης
+    type: Τι σας ενδιαφέρει;
+    types:
+      - Προσωποποιημένο δώρο / bobo μπαλόνι
+      - Στολισμός γενεθλίων
+      - Στολισμός βάπτισης
+      - Άλλη εκδήλωση
+    message: Περιγράψτε την ιδέα σας
+    placeholder: Χρώματα, όνομα ή ευχή, αριθμός ατόμων, χώρος…
+    send: Στείλε το αίτημά σου
+    note: Θα σας απαντήσουμε το συντομότερο δυνατό.
+    subject: Νέο αίτημα από το site Balloona
+    find_us: Βρείτε μας
+    find_us_text: Δείτε τις τελευταίες μας δημιουργίες και στείλτε μας μήνυμα στα social media.
+en:
+  locale: en_GB
+  home_label: "Balloona – Home"
+  menu: Menu
+  main_menu: Main menu
+  nav:
+    home: Home
+    creations: Creations
+    decorations: Decorations
+    about: About me
+    contact: Contact
+  language: Language
+  cta_title: Your idea, our creation
+  cta_button: Send us your request
+  quote: Request a quote
+  filter_label: Filter by category
+  all: All
+  similar: I'd like something similar
+  zoom_in: Zoom in
+  zoom_out: Zoom out
+  previous: Previous
+  next: Next
+  close: Close
+  media_group: Photos and videos of this creation
+  form:
+    name: Full name
+    phone: Phone
+    email: Email
+    date: Event date
+    type: What are you interested in?
+    types:
+      - Personalised gift / bobo balloon
+      - Birthday decoration
+      - Christening decoration
+      - Other event
+    message: Describe your idea
+    placeholder: Colours, name or wish, number of guests, venue…
+    send: Send your request
+    note: We'll get back to you as soon as possible.
+    subject: New request from the Balloona site (English)
+    find_us: Find us
+    find_us_text: See our latest creations and send us a message on social media.

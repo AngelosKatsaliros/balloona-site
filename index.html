@@ -1,53 +1,10 @@
 ---
+layout: default
+lang: el
+ref: home
+title: "Balloona | Προσωποποιημένα μπαλόνια & στολισμοί"
+description: "Balloona – Luxury balloon creations. Προσωποποιημένα bobo μπαλόνια, δώρα και στολισμοί για γενέθλια, βαπτίσεις και εκδηλώσεις."
 ---
-<!doctype html>
-<html lang="el">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Balloona | Προσωποποιημένα μπαλόνια & στολισμοί</title>
-<meta name="description" content="Balloona – Luxury balloon creations. Προσωποποιημένα bobo μπαλόνια, δώρα και στολισμοί για γενέθλια, βαπτίσεις και εκδηλώσεις.">
-<link rel="canonical" href="https://balloona.gr/">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="el_GR">
-<meta property="og:site_name" content="Balloona">
-<meta property="og:title" content="Balloona | Προσωποποιημένα μπαλόνια & στολισμοί">
-<meta property="og:description" content="Balloona – Luxury balloon creations. Προσωποποιημένα bobo μπαλόνια, δώρα και στολισμοί για γενέθλια, βαπτίσεις και εκδηλώσεις.">
-<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#fbf3ee">
-<link rel="icon" href="images/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;500;600&family=Great+Vibes&family=Noto+Serif+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="index.html" aria-label="Balloona – Αρχική">
-      <img src="images/logo.png" alt="" width="58" height="58">
-      <span class="brand-text"><span class="brand-name">Balloona</span><span class="brand-tag">Pop the Joy!</span></span>
-    </a>
-    <button class="nav-toggle" aria-label="Μενού" aria-expanded="false" aria-controls="nav">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
-    <nav class="nav" id="nav" aria-label="Κύριο μενού">
-      <ul>
-        <li><a href="index.html" aria-current="page">Αρχική</a></li>
-        <li><a href="dimiourgies.html">Δημιουργίες</a></li>
-        <li><a href="stolismoi.html">Στολισμοί</a></li>
-        <li><a href="gia-emena.html">Για εμένα</a></li>
-        <li><a href="epikoinonia.html">Επικοινωνία</a></li>
-      </ul>
-    </nav>
-    <div class="header-social">
-      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener" aria-label="Instagram @balloona.pop" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
-      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener" aria-label="TikTok @balloona.pop" title="TikTok"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg></a>
-    </div>
-  </div>
-</header>
-<main>
 <section class="hero" style="padding:0">
   <div class="container hero-inner">
     <div class="hero-copy">
@@ -56,8 +13,8 @@
       <hr class="rule">
       <p class="lead">Προσωποποιημένα μπαλόνια και στολισμοί για τις πιο όμορφες στιγμές σας.</p>
       <div class="hero-actions">
-        <a class="btn" href="epikoinonia.html">Ζήτησε προσφορά <span class="arrow">&rarr;</span></a>
-        <a class="link-underline" href="dimiourgies.html">Δες τις δημιουργίες μας</a>
+        <a class="btn" href="{% include url.html to="contact" %}">Ζήτησε προσφορά <span class="arrow">&rarr;</span></a>
+        <a class="link-underline" href="{% include url.html to="creations" %}">Δες τις δημιουργίες μας</a>
       </div>
     </div>
   </div>
@@ -68,15 +25,15 @@
   <div class="container">
     <h2 class="section-title">Δημιουργίες για κάθε περίσταση</h2>
     <div class="cards">
-      <a class="card" href="dimiourgies.html#dora">
+      <a class="card" href="{% include url.html to="creations" %}#dora">
         <img src="{% include src.html path=site.data.home.gift %}" alt="Προσωποποιημένα δώρα" loading="lazy">
         <h3>Προσωποποιημένα δώρα</h3>
       </a>
-      <a class="card" href="dimiourgies.html#genethlia">
+      <a class="card" href="{% include url.html to="creations" %}#genethlia">
         <img src="{% include src.html path=site.data.home.birthday %}" alt="Στολισμός γενεθλίων" loading="lazy">
         <h3>Γενέθλια</h3>
       </a>
-      <a class="card" href="dimiourgies.html#vaptiseis">
+      <a class="card" href="{% include url.html to="creations" %}#vaptiseis">
         <img src="{% include src.html path=site.data.home.baptism %}" alt="Στολισμός βάπτισης" loading="lazy">
         <h3>Βαπτίσεις &amp; εκδηλώσεις</h3>
       </a>
@@ -93,31 +50,9 @@
         <p>Είμαι παιδαγωγός και η δημιουργικότητα και η φαντασία είναι αναπόσπαστο κομμάτι της ζωής μου! Αγαπώ να δίνω μορφή σε μικρές ιδέες και να δημιουργώ πράγματα που φέρνουν χαμόγελα.</p>
         <p>Κάπως έτσι ξεκίνησα να φτιάχνω προσωποποιημένα bobo μπαλόνια και γεννήθηκε η Balloona: από την επιθυμία μου να μετατρέπω τη φαντασία σε ξεχωριστά δώρα, γεμάτα αγάπη και φροντίδα.</p>
         <p>Κάθε δημιουργία έχει τη δική της μικρή ιστορία — και χαίρομαι που μπορώ να γίνομαι κομμάτι της δικής σας!</p>
-        <div class="signature"><img src="images/signature.png" alt="Με αγάπη, Ελισάβετ" width="300" height="86"></div>
+        <div class="signature"><img src="{{ '/images/signature.png' | relative_url }}" alt="Με αγάπη, Ελισάβετ" width="300" height="86"></div>
       </div>
     </div>
   </div>
 </section>
-<section class="cta-section">
-  <div class="container">
-    <div class="cta">
-      <div class="cta-left"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M22 30c-8-6-12-10-12-15a6 6 0 0 1 12-1 6 6 0 0 1 12 1c0 5-4 9-12 15z"/><path d="M42 24c-6-4.5-9-7.5-9-11a4.5 4.5 0 0 1 9-.8 4.5 4.5 0 0 1 9 .8c0 3.5-3 6.5-9 11z"/><path d="M22 30c2 8-4 14 0 22M42 24c-2 10 6 16 0 28"/></svg><h2>Η δική σου ιδέα, η δική μας δημιουργία</h2></div>
-      <a class="btn" href="epikoinonia.html">Στείλε μας το αίτημά σου <span class="arrow">&rarr;</span></a>
-    </div>
-  </div>
-</section>
-</main>
-<footer class="site-footer">
-  <div class="container">
-    <div class="social">
-      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> Instagram</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> TikTok</a>
-      <span class="handle">@balloona.pop</span>
-    </div>
-    <p class="copyright">© <span id="year">2026</span> Balloona · Luxury Balloon Creations</p>
-  </div>
-</footer>
-<script src="js/main.js"></script>
-</body>
-</html>
+{% include cta.html %}

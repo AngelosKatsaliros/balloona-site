@@ -1,14 +1,17 @@
 [
   {
     "id": "dora",
-    "name": "Προσωποποιημένα δώρα"
+    "name": "Προσωποποιημένα δώρα",
+    "name_en": "Personalised gifts"
   },
   {
     "id": "genethlia",
-    "name": "Γενέθλια"
+    "name": "Γενέθλια",
+    "name_en": "Birthdays"
   },
   {
     "id": "vaptiseis",
-    "name": "Βαπτίσεις & εκδηλώσεις"
+    "name": "Βαπτίσεις & εκδηλώσεις",
+    "name_en": "Christenings & events"
   }
 ]

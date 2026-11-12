@@ -145,18 +145,17 @@ async function getContent(gh, cfg) {
   };
 }
 
-/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description } */
+/** Add a new photo at the top of the gallery. Body: { image (base64), title, category, description, title_en, description_en } */
 async function addGalleryPhoto(request, gh) {
   const body = await readJson(request);
-  const title = cleanTitle(body.title);
-  const category = cleanCategory(body.category, (await readCategories(gh)).data);
-  const description = cleanDescription(body.description);
+  const texts = itemTexts(body, (await readCategories(gh)).data);
+  const title = texts.title;
   const image = decodeImage(body.image);
 
   return gh.withRetry(async () => {
     const gallery = await gh.readJson(GALLERY_PATH);
     const path = newImagePath(image.ext);
-    const list = [withDescription({ image: "/" + path, title, category }, description), ...asList(gallery.data)];
+    const list = [{ image: "/" + path, ...texts }, ...asList(gallery.data)];
     await gh.commit(`Προσθήκη φωτογραφίας: ${title}`, [
       { path, base64: image.base64 },
       { path: GALLERY_PATH, text: toJson(list) },
@@ -180,12 +179,11 @@ async function uploadBlob(request, gh) {
   return { sha: blob.sha };
 }
 
-/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description } */
+/** Step 2 of a video upload: add it at the top of the gallery. Body: { blob, ext, poster (base64 jpg), title, category, description, title_en, description_en } */
 async function addGalleryVideo(request, gh) {
   const body = await readJson(request);
-  const title = cleanTitle(body.title);
-  const category = cleanCategory(body.category, (await readCategories(gh)).data);
-  const description = cleanDescription(body.description);
+  const texts = itemTexts(body, (await readCategories(gh)).data);
+  const title = texts.title;
   const blob = String(body.blob || "");
   if (!/^[0-9a-f]{40}$/.test(blob)) throw new HttpError(400, "Το βίντεο δεν ανέβηκε σωστά. Δοκίμασε ξανά.");
   const ext = String(body.ext || "").toLowerCase();
@@ -196,7 +194,7 @@ async function addGalleryVideo(request, gh) {
     const gallery = await gh.readJson(GALLERY_PATH);
     const videoPath = newImagePath(ext);
     const posterPath = poster ? videoPath.replace(/\.[a-z0-9]+$/, "-poster." + poster.ext) : null;
-    const item = withDescription({ video: "/" + videoPath, image: posterPath ? "/" + posterPath : "", title, category }, description);
+    const item = { video: "/" + videoPath, image: posterPath ? "/" + posterPath : "", ...texts };
     const list = [item, ...asList(gallery.data)];
     const files = [{ path: videoPath, sha: blob }, { path: GALLERY_PATH, text: toJson(list) }];
     if (poster) files.push({ path: posterPath, base64: poster.base64 });
@@ -287,11 +285,7 @@ async function saveGallery(request, gh) {
       return known.get(k);
     });
     const [cover, ...rest] = media;
-    const item = { ...(cover.video ? { video: cover.video } : {}), image: cover.image || "" };
-    item.title = cleanTitle(p.title);
-    item.category = cleanCategory(p.category, categories.data);
-    const description = cleanDescription(p.description);
-    if (description) item.description = description;
+    const item = { ...(cover.video ? { video: cover.video } : {}), image: cover.image || "", ...itemTexts(p, categories.data) };
     if (rest.length) item.more = rest;
     return item;
   });
@@ -332,7 +326,9 @@ async function saveCategories(request, gh) {
     names.add(lower);
     const id = c && existing.has(c.id) && !ids.has(c.id) ? c.id : null;
     if (id) ids.add(id);
-    return { id, name };
+    const nameEn = String((c && c.name_en) || "").replace(/\s+/g, " ").trim();
+    if (nameEn.length > MAX_CATEGORY_NAME) throw new HttpError(400, `Το αγγλικό όνομα «${nameEn.slice(0, 20)}…» είναι πολύ μεγάλο (έως ${MAX_CATEGORY_NAME} χαρακτήρες).`);
+    return nameEn ? { id, name, name_en: nameEn } : { id, name };
   });
   // New categories get an id after the existing ones are known, so they never take an existing id
   for (const c of list) {
@@ -518,8 +514,18 @@ function cleanDescription(description) {
   return d;
 }
 
-function withDescription(item, description) {
-  return description ? { ...item, description } : item;
+/** Title, category and description of a creation; the English ones are optional and left out when empty */
+function itemTexts(src, categories) {
+  const out = { title: cleanTitle(src.title) };
+  const titleEn = String(src.title_en || "").replace(/\s+/g, " ").trim();
+  if (titleEn.length > MAX_TITLE) throw new HttpError(400, `Ο αγγλικός τίτλος είναι πολύ μεγάλος (έως ${MAX_TITLE} χαρακτήρες).`);
+  if (titleEn) out.title_en = titleEn;
+  out.category = cleanCategory(src.category, categories);
+  const description = cleanDescription(src.description);
+  if (description) out.description = description;
+  const descriptionEn = cleanDescription(src.description_en);
+  if (descriptionEn) out.description_en = descriptionEn;
+  return out;
 }
 
 function cleanCategory(category, categories) {

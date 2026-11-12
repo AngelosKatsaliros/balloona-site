@@ -1,3 +1,36 @@
+// Texts used by this script, in the page's language
+const EN = document.documentElement.lang === 'en';
+const T = EN ? {
+  of: 'of',
+  photo: 'Photo',
+  video: 'Video',
+  creation: 'Creation',
+  noDesc: 'Every creation is handmade, in the colours and with the name or wish you choose. Send us your idea!',
+  zoomTouch: 'Tap, or spread two fingers, to zoom.',
+  zoomMouse: 'Click the photo or use the mouse wheel to zoom.',
+  interested: (t) => `I'm interested in something like “${t}” from your creations.\n`,
+  notConnected: 'The form isn\u2019t connected yet. Please message us on Instagram @balloona.pop.',
+  thanks: 'Thank you! We\u2019ve received your request and will be in touch soon.',
+  failed: 'Something went wrong. Please try again or message us on Instagram.',
+} : {
+  of: 'από',
+  photo: 'Φωτογραφία',
+  video: 'Βίντεο',
+  creation: 'Δημιουργία',
+  noDesc: 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!',
+  zoomTouch: 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση.',
+  zoomMouse: 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση.',
+  interested: (t) => `Ενδιαφέρομαι για κάτι σαν «${t}» από τις Δημιουργίες.\n`,
+  notConnected: 'Η φόρμα δεν έχει συνδεθεί ακόμη. Στείλτε μας μήνυμα στο Instagram @balloona.pop.',
+  thanks: 'Ευχαριστούμε! Λάβαμε το αίτημά σας και θα επικοινωνήσουμε σύντομα.',
+  failed: 'Κάτι πήγε στραβά. Δοκιμάστε ξανά ή στείλτε μας μήνυμα στο Instagram.',
+};
+
+// Language switch: stay on the same category of the gallery
+document.querySelectorAll('.lang-switch a').forEach((a) => a.addEventListener('click', () => {
+  if (location.hash) a.href = a.href.split('#')[0] + location.hash;
+}));
+
 // Mobile menu
 const toggle = document.querySelector('.nav-toggle');
 const nav = document.getElementById('nav');
@@ -186,10 +219,10 @@ if (lb && typeof lb.showModal === 'function') {
 
     document.getElementById('lb-cat').textContent = cat;
     document.getElementById('lb-title').textContent = title;
-    desc.textContent = text || 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!';
+    desc.textContent = text || T.noDesc;
     desc.classList.toggle('placeholder', !text);
-    cta.href = 'epikoinonia.html?gia=' + encodeURIComponent(title) + '&cat=' + encodeURIComponent(fig.dataset.cat || '');
-    document.getElementById('lb-count').textContent = items.length > 1 ? `Δημιουργία ${index + 1}\u00a0από\u00a0${items.length}` : '';
+    cta.href = cta.dataset.base + '?gia=' + encodeURIComponent(title) + '&cat=' + encodeURIComponent(fig.dataset.cat || '');
+    document.getElementById('lb-count').textContent = items.length > 1 ? `${T.creation} ${index + 1}\u00a0${T.of}\u00a0${items.length}` : '';
     document.getElementById('lb-items').hidden = items.length < 2;
 
     thumbs.hidden = media.length < 2;
@@ -200,7 +233,7 @@ if (lb && typeof lb.showModal === 'function') {
         const b = document.createElement('button');
         b.type = 'button';
         b.dataset.j = j;
-        b.setAttribute('aria-label', `${m.video ? 'Βίντεο' : 'Φωτογραφία'} ${j + 1} από ${media.length}`);
+        b.setAttribute('aria-label', `${m.video ? T.video : T.photo} ${j + 1} ${T.of} ${media.length}`);
         if (m.image) {
           const t = document.createElement('img');
           t.src = m.image;
@@ -241,7 +274,7 @@ if (lb && typeof lb.showModal === 'function') {
       video.load();
       zoomBar.hidden = false;
       img.hidden = false;
-      img.alt = media.length > 1 ? `${title} (${j + 1} από ${media.length})` : title;
+      img.alt = media.length > 1 ? `${title} (${j + 1} ${T.of} ${media.length})` : title;
       img.src = m.image;
     }
     thumbs.querySelectorAll('button').forEach((b) => {
@@ -253,8 +286,8 @@ if (lb && typeof lb.showModal === 'function') {
       }
     });
     hint.textContent = [
-      media.length > 1 ? `${m.video ? 'Βίντεο' : 'Φωτογραφία'} ${j + 1} από ${media.length}.` : '',
-      m.video ? '' : (touch ? 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση.' : 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση.'),
+      media.length > 1 ? `${m.video ? T.video : T.photo} ${j + 1} ${T.of} ${media.length}.` : '',
+      m.video ? '' : (touch ? T.zoomTouch : T.zoomMouse),
     ].filter(Boolean).join(' ');
   }
 
@@ -315,7 +348,7 @@ const params = new URLSearchParams(location.search);
 const wanted = params.get('gia');
 const msgField = document.getElementById('message');
 if (wanted && msgField && !msgField.value) {
-  msgField.value = `Ενδιαφέρομαι για κάτι σαν «${wanted.slice(0, 120)}» από τις Δημιουργίες.\n`;
+  msgField.value = T.interested(wanted.slice(0, 120));
   // Newer categories (added from /admin) count as «Άλλη εκδήλωση»
   const typeIndex = params.get('cat') ? { dora: 0, genethlia: 1, vaptiseis: 2 }[params.get('cat')] ?? 3 : null;
   const typeField = document.getElementById('type');
@@ -329,7 +362,7 @@ if (form) {
   form.addEventListener('submit', async (e) => {
     if (form.querySelector('[name="access_key"]').value === 'YOUR_ACCESS_KEY') {
       e.preventDefault();
-      status.textContent = 'Η φόρμα δεν έχει συνδεθεί ακόμη. Στείλτε μας μήνυμα στο Instagram @balloona.pop.';
+      status.textContent = T.notConnected;
       status.classList.add('show');
       return;
     }
@@ -339,9 +372,9 @@ if (form) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.success === false) throw new Error();
       form.reset();
-      status.textContent = 'Ευχαριστούμε! Λάβαμε το αίτημά σας και θα επικοινωνήσουμε σύντομα.';
+      status.textContent = T.thanks;
     } catch {
-      status.textContent = 'Κάτι πήγε στραβά. Δοκιμάστε ξανά ή στείλτε μας μήνυμα στο Instagram.';
+      status.textContent = T.failed;
     }
     status.classList.add('show');
   });

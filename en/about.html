@@ -1,0 +1,40 @@
+---
+layout: default
+lang: en
+ref: about
+title: "About me | Balloona"
+description: "Meet Elisavet, the creator of Balloona: an educator with a love for creativity and personalised balloons."
+---
+<section class="page-hero">
+  <div class="container">
+    <p class="eyebrow">Luxury Balloon Creations</p>
+    <h1>Hi, I'm Elisavet</h1>
+    <hr class="rule">
+    <p>The story behind Balloona.</p>
+  </div>
+</section>
+
+<section>
+  <div class="container">
+    <div class="about">
+      <div class="about-img"><img src="{% include src.html path=site.data.home.about %}" alt="Elisavet in the Balloona workshop" loading="lazy"></div>
+      <div class="about-text">
+        <p>I'm an educator, and creativity and imagination are an essential part of my life! I love giving shape to small ideas and making things that bring smiles.</p>
+        <p>That's how I started making personalised bobo balloons, and Balloona was born: from my wish to turn imagination into one-of-a-kind gifts, full of love and care.</p>
+        <p>Every creation has its own little story — and I'm so happy to become part of yours!</p>
+        <div class="signature"><img src="{{ '/images/signature.png' | relative_url }}" alt="With love, Elisavet" width="300" height="86"></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section style="padding-top:0">
+  <div class="container">
+    <h2 class="section-title">What matters to me</h2>
+    <div class="values">
+      <div class="value"><h3>Care</h3><p>Every creation is handmade, with attention to every detail.</p></div>
+      <div class="value"><h3>Personal touch</h3><p>The names, wishes and colours are yours, because no two moments are alike.</p></div>
+      <div class="value"><h3>Joy</h3><p>The goal is always the same: a spontaneous smile. Pop the Joy!</p></div>
+    </div>
+  </div>
+</section>
+{% include cta.html %}

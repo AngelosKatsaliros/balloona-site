@@ -2,6 +2,8 @@
 title: Balloona
 url: "https://angeloskatsaliros.github.io"
 baseurl: "/balloona-site"
+# Address search engines should use for the pages (the final domain)
+canonical_url: "https://balloona.gr"
 exclude:
   - README.md
   - .pages.yml

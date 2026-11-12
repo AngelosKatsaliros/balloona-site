@@ -2,31 +2,37 @@
   {
     "image": "/images/uploads/gift.jpg",
     "title": "Bobo με όνομα",
+    "title_en": "Bobo balloon with a name",
     "category": "dora"
   },
   {
     "image": "/images/uploads/hero.jpg",
     "title": "«Χρόνια Πολλά!» με αρκουδάκι",
+    "title_en": "“Happy Birthday!” with a teddy bear",
     "category": "genethlia"
   },
   {
     "image": "/images/uploads/birthday.jpg",
     "title": "Πρώτα γενέθλια",
+    "title_en": "First birthday",
     "category": "genethlia"
   },
   {
     "image": "/images/uploads/baptism.jpg",
     "title": "Αψίδα βάπτισης",
+    "title_en": "Christening arch",
     "category": "vaptiseis"
   },
   {
     "image": "/images/uploads/about.jpg",
     "title": "Χειροποίητο δώρο-έκπληξη",
+    "title_en": "Handmade surprise gift",
     "category": "dora"
   },
   {
     "image": "/images/uploads/baptism.jpg",
     "title": "Στολισμός εκκλησίας",
+    "title_en": "Church decoration",
     "category": "vaptiseis"
   }
 ]

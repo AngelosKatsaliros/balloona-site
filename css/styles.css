@@ -60,6 +60,7 @@ h1, h2, h3 { font-family: var(--serif); color: var(--burgundy); font-weight: 500
 .nav a:hover::after, .nav a[aria-current="page"]::after { transform: scaleX(1); }
 
 .nav-toggle { display: none; background: none; border: 0; padding: 8px; cursor: pointer; color: var(--burgundy); }
+.nav .nav-social { display: none; }
 .header-social { display: flex; gap: 8px; padding-left: 22px; border-left: 1px solid rgba(200, 164, 106, 0.45); }
 .header-social a {
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center;
@@ -69,6 +70,14 @@ h1, h2, h3 { font-family: var(--serif); color: var(--burgundy); font-weight: 500
 .header-social a:hover, .header-social a:focus-visible { background: var(--rose); border-color: var(--rose); color: #fff; }
 .header-social svg { width: 18px; height: 18px; }
 .nav-toggle svg { width: 28px; height: 28px; }
+.lang-switch { display: flex; gap: 2px; height: 40px; margin-left: -10px; padding: 3px; border: 1px solid var(--blush-2); border-radius: 999px; background: var(--white); }
+.lang-switch a {
+  display: grid; place-items: center; min-width: 34px; padding: 0 8px; border-radius: 999px; text-decoration: none;
+  font-size: 13px; font-weight: 600; letter-spacing: .06em; color: var(--burgundy); transition: background .2s, color .2s;
+}
+.lang-switch a[aria-current="true"] { background: var(--burgundy); color: #fff; }
+.lang-switch a:not([aria-current="true"]):hover { background: var(--blush); }
+.lang-switch a:focus-visible { outline: 2px solid var(--rose); outline-offset: 1px; }
 
 /* ---------- Buttons ---------- */
 .btn {
@@ -341,6 +350,7 @@ body.lb-open { overflow: hidden; }
 @media (max-width: 960px) {
   .nav-toggle { display: block; order: 3; }
   .header-social { order: 2; border-left: 0; padding-left: 0; }
+  .lang-switch { order: 2; margin-left: 0; }
   .nav {
     position: absolute; top: 100%; left: 0; right: 0; background: var(--cream);
     border-bottom: 1px solid rgba(200,164,106,.3); display: none;
@@ -371,6 +381,8 @@ body.lb-open { overflow: hidden; }
   .header-inner { min-height: 68px; gap: 10px; }
   .header-social { gap: 6px; }
   .header-social a { width: 38px; height: 38px; }
+  .lang-switch { height: 38px; padding: 2px; }
+  .lang-switch a { min-width: 30px; padding: 0 6px; font-size: 12px; }
   .brand img { width: 46px; height: 46px; }
   .brand-name { font-size: 36px; }
   .brand-tag { font-size: 13px; }
@@ -381,6 +393,23 @@ body.lb-open { overflow: hidden; }
   .hero-media { height: 300px; }
   .cta { padding: 26px 20px; }
   .form, .contact-info { padding: 22px; }
+}
+
+/* Small phones: the Instagram/TikTok buttons move into the menu so the language switch fits */
+@media (max-width: 520px) {
+  .header-social { display: none; }
+  .brand { flex-shrink: 0; }
+  .nav .nav-social { display: flex; gap: 24px; padding-top: 6px; }
+  .nav .nav-social a { display: inline-flex; align-items: center; gap: 8px; border-bottom: 0; }
+  .nav-social svg { width: 18px; height: 18px; }
+}
+@media (max-width: 360px) {
+  .header-inner { gap: 8px; }
+  .brand { gap: 8px; }
+  .brand img { width: 40px; height: 40px; }
+  .brand-name { font-size: 31px; }
+  .brand-tag { font-size: 12px; }
+  .nav-toggle { padding: 6px; }
 }
 
 /* Signature image (cut from the design; replace with a scan of the real signature if you like) */

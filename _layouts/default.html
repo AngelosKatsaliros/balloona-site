@@ -1,0 +1,77 @@
+{%- assign t = site.data.i18n[page.lang] -%}
+{%- assign here = site.data.pages[page.ref] -%}
+<!doctype html>
+<html lang="{{ page.lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ page.title }}</title>
+<meta name="description" content="{{ page.description | escape }}">
+<link rel="canonical" href="{{ site.canonical_url }}{{ here[page.lang] }}">
+<link rel="alternate" hreflang="el" href="{{ site.canonical_url }}{{ here.el }}">
+<link rel="alternate" hreflang="en" href="{{ site.canonical_url }}{{ here.en }}">
+<link rel="alternate" hreflang="x-default" href="{{ site.canonical_url }}{{ here.el }}">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="{{ t.locale }}">
+<meta property="og:locale:alternate" content="{% if page.lang == 'en' %}el_GR{% else %}en_GB{% endif %}">
+<meta property="og:site_name" content="Balloona">
+<meta property="og:title" content="{{ page.title | escape }}">
+<meta property="og:description" content="{{ page.description | escape }}">
+<meta property="og:image" content="{{ site.data.home.hero | absolute_url }}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fbf3ee">
+<link rel="icon" href="{{ '/images/logo.png' | relative_url }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;500;600&family=Great+Vibes&family=Noto+Serif+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ '/css/styles.css' | relative_url }}">
+</head>
+<body>
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="{% include url.html to="home" %}" aria-label="{{ t.home_label }}">
+      <img src="{{ '/images/logo.png' | relative_url }}" alt="" width="58" height="58">
+      <span class="brand-text"><span class="brand-name">Balloona</span><span class="brand-tag">Pop the Joy!</span></span>
+    </a>
+    <button class="nav-toggle" aria-label="{{ t.menu }}" aria-expanded="false" aria-controls="nav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+    <nav class="nav" id="nav" aria-label="{{ t.main_menu }}">
+      <ul>
+{%- assign keys = "home,creations,decorations,about,contact" | split: "," -%}
+{%- for key in keys %}
+        <li><a href="{% include url.html to=key %}"{% if key == page.ref %} aria-current="page"{% endif %}>{{ t.nav[key] }}</a></li>
+{%- endfor %}
+        <li class="nav-social">
+          <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> Instagram</a>
+          <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> TikTok</a>
+        </li>
+      </ul>
+    </nav>
+    <div class="header-social">
+      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener" aria-label="Instagram @balloona.pop" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
+      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener" aria-label="TikTok @balloona.pop" title="TikTok"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg></a>
+    </div>
+    <div class="lang-switch" role="group" aria-label="{{ t.language }}">
+      <a href="{{ here.el | relative_url }}" lang="el" hreflang="el" title="Ελληνικά"{% if page.lang == 'el' %} aria-current="true"{% endif %}>ΕΛ</a>
+      <a href="{{ here.en | relative_url }}" lang="en" hreflang="en" title="English"{% if page.lang == 'en' %} aria-current="true"{% endif %}>EN</a>
+    </div>
+  </div>
+</header>
+<main>
+{{ content }}
+</main>
+<footer class="site-footer">
+  <div class="container">
+    <div class="social">
+      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> Instagram</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> TikTok</a>
+      <span class="handle">@balloona.pop</span>
+    </div>
+    <p class="copyright">© <span id="year">2026</span> Balloona · Luxury Balloon Creations</p>
+  </div>
+</footer>
+<script src="{{ '/js/main.js' | relative_url }}"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+# The same page in each language (used for menus and the ΕΛ / EN switch)
+home:
+  el: /
+  en: /en/
+creations:
+  el: /dimiourgies.html
+  en: /en/creations.html
+decorations:
+  el: /stolismoi.html
+  en: /en/decorations.html
+about:
+  el: /gia-emena.html
+  en: /en/about.html
+contact:
+  el: /epikoinonia.html
+  en: /en/contact.html

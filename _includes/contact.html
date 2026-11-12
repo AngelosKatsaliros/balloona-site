@@ -1,0 +1,43 @@
+{%- assign f = site.data.i18n[page.lang].form -%}
+<section>
+  <div class="container contact-grid">
+    <!-- Requests are emailed by Web3Forms (https://web3forms.com). The access key is below. -->
+    <form class="form" id="request-form" action="https://api.web3forms.com/submit" method="POST">
+      <input type="hidden" name="access_key" value="7b43d998-86ef-4bdd-8b35-74ab86b0a6a3">
+      <input type="hidden" name="subject" value="{{ f.subject }}">
+      <input type="hidden" name="from_name" value="Balloona site">
+      {%- if page.lang == "en" %}
+      <input type="hidden" name="Γλώσσα" value="English (απάντηση στα αγγλικά)">
+      {%- endif %}
+      <div class="form-row">
+        <div class="field"><label for="name">{{ f.name }} *</label><input id="name" name="name" autocomplete="name" required></div>
+        <div class="field"><label for="phone">{{ f.phone }}</label><input id="phone" name="phone" type="tel" autocomplete="tel"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label for="email">{{ f.email }} *</label><input id="email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="date">{{ f.date }}</label><input id="date" name="date" type="date"></div>
+      </div>
+      <div class="field">
+        <label for="type">{{ f.type }}</label>
+        <select id="type" name="type">
+          {%- for o in f.types %}
+          <option>{{ o }}</option>
+          {%- endfor %}
+        </select>
+      </div>
+      <div class="field"><label for="message">{{ f.message }} *</label><textarea id="message" name="message" placeholder="{{ f.placeholder }}" required></textarea></div>
+      <input type="checkbox" name="botcheck" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <button class="btn" type="submit">{{ f.send }} <span class="arrow">&rarr;</span></button>
+      <p class="form-note">{{ f.note }}</p>
+      <div class="form-status" role="status" aria-live="polite"></div>
+    </form>
+    <aside class="contact-info">
+      <h2>{{ f.find_us }}</h2>
+      <p>{{ f.find_us_text }}</p>
+      <ul>
+        <li><a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> Instagram · @balloona.pop</a></li>
+        <li><a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> TikTok · @balloona.pop</a></li>
+      </ul>
+    </aside>
+  </div>
+</section>

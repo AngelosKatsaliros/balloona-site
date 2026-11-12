@@ -1,0 +1,8 @@
+{% assign t = site.data.i18n[page.lang] %}<section class="cta-section">
+  <div class="container">
+    <div class="cta">
+      <div class="cta-left"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M22 30c-8-6-12-10-12-15a6 6 0 0 1 12-1 6 6 0 0 1 12 1c0 5-4 9-12 15z"/><path d="M42 24c-6-4.5-9-7.5-9-11a4.5 4.5 0 0 1 9-.8 4.5 4.5 0 0 1 9 .8c0 3.5-3 6.5-9 11z"/><path d="M22 30c2 8-4 14 0 22M42 24c-2 10 6 16 0 28"/></svg><h2>{{ t.cta_title }}</h2></div>
+      <a class="btn" href="{% include url.html to="contact" %}">{{ t.cta_button }} <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+</section>

@@ -1,53 +1,10 @@
 ---
+layout: default
+lang: el
+ref: creations
+title: "Δημιουργίες | Balloona"
+description: "Δείτε τις δημιουργίες της Balloona: προσωποποιημένα bobo μπαλόνια, δώρα, στολισμοί γενεθλίων και βαπτίσεων."
 ---
-<!doctype html>
-<html lang="el">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Δημιουργίες | Balloona</title>
-<meta name="description" content="Δείτε τις δημιουργίες της Balloona: προσωποποιημένα bobo μπαλόνια, δώρα, στολισμοί γενεθλίων και βαπτίσεων.">
-<link rel="canonical" href="https://balloona.gr/dimiourgies.html">
-<meta property="og:type" content="website">
-<meta property="og:locale" content="el_GR">
-<meta property="og:site_name" content="Balloona">
-<meta property="og:title" content="Δημιουργίες | Balloona">
-<meta property="og:description" content="Δείτε τις δημιουργίες της Balloona: προσωποποιημένα bobo μπαλόνια, δώρα, στολισμοί γενεθλίων και βαπτίσεων.">
-<meta property="og:image" content="{{ site.url }}{{ site.baseurl }}/{% include src.html path=site.data.home.hero %}">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#fbf3ee">
-<link rel="icon" href="images/logo.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;500;600&family=Great+Vibes&family=Noto+Serif+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/styles.css">
-</head>
-<body>
-<header class="site-header">
-  <div class="container header-inner">
-    <a class="brand" href="index.html" aria-label="Balloona – Αρχική">
-      <img src="images/logo.png" alt="" width="58" height="58">
-      <span class="brand-text"><span class="brand-name">Balloona</span><span class="brand-tag">Pop the Joy!</span></span>
-    </a>
-    <button class="nav-toggle" aria-label="Μενού" aria-expanded="false" aria-controls="nav">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
-    </button>
-    <nav class="nav" id="nav" aria-label="Κύριο μενού">
-      <ul>
-        <li><a href="index.html">Αρχική</a></li>
-        <li><a href="dimiourgies.html" aria-current="page">Δημιουργίες</a></li>
-        <li><a href="stolismoi.html">Στολισμοί</a></li>
-        <li><a href="gia-emena.html">Για εμένα</a></li>
-        <li><a href="epikoinonia.html">Επικοινωνία</a></li>
-      </ul>
-    </nav>
-    <div class="header-social">
-      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener" aria-label="Instagram @balloona.pop" title="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg></a>
-      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener" aria-label="TikTok @balloona.pop" title="TikTok"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg></a>
-    </div>
-  </div>
-</header>
-<main>
 <section class="page-hero">
   <div class="container">
     <p class="eyebrow">Luxury Balloon Creations</p>
@@ -57,71 +14,5 @@
   </div>
 </section>
 
-<section>
-  <div class="container">
-    <div class="filters" role="group" aria-label="Φίλτρο κατηγορίας">
-      <button class="filter active" data-filter="all">Όλες</button>
-{% for c in site.data.categories %}{% assign n = site.data.gallery | where: "category", c.id | size %}{% if n > 0 %}
-      <button class="filter" data-filter="{{ c.id }}" id="{{ c.id }}">{{ c.name | escape }}</button>{% endif %}{% endfor %}
-    </div>
-    <div class="gallery">
-{% for p in site.data.gallery %}{% if p.image or p.video %}
-      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span>{% if p.more.size > 0 %}<span class="media-count" aria-hidden="true">{{ p.more.size | plus: 1 }}</span>{% endif %}</div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ p.title | escape }}</button><small>{% assign cat = site.data.categories | where: "id", p.category | first %}{{ cat.name | escape }}</small></figcaption>{% if p.description %}<div class="item-desc" hidden>{{ p.description | strip | escape }}</div>{% endif %}{% if p.more.size > 0 %}<ul class="item-more" hidden>{% for m in p.more %}<li{% if m.video %} data-video="{% include src.html path=m.video %}"{% endif %}{% if m.image and m.image != "" %} data-image="{% include src.html path=m.image %}"{% endif %}></li>{% endfor %}</ul>{% endif %}</figure>
-{% endif %}{% endfor %}
-    </div>
-  </div>
-</section>
-<dialog class="lightbox" id="lightbox" aria-labelledby="lb-title">
-  <div class="lb-card">
-    <div class="lb-media">
-    <div class="lb-stage" id="lb-stage">
-      <img class="lb-img" id="lb-img" alt="" draggable="false">
-      <video class="lb-video" id="lb-video" controls playsinline loop hidden></video>
-      <div class="lb-zoom" id="lb-zoom">
-        <button type="button" data-zoom="out" aria-label="Σμίκρυνση" title="Σμίκρυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-        <button type="button" data-zoom="in" aria-label="Μεγέθυνση" title="Μεγέθυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
-      </div>
-      <button class="lb-nav lb-prev" type="button" aria-label="Προηγούμενη"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
-      <button class="lb-nav lb-next" type="button" aria-label="Επόμενη"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
-    </div>
-    <div class="lb-thumbs" id="lb-thumbs" role="group" aria-label="Φωτογραφίες και βίντεο της δημιουργίας" hidden></div>
-    </div>
-    <div class="lb-info">
-      <p class="lb-cat" id="lb-cat"></p>
-      <h2 id="lb-title"></h2>
-      <hr class="rule">
-      <div class="lb-desc" id="lb-desc"></div>
-      <a class="btn" id="lb-cta" href="epikoinonia.html">Θέλω κάτι παρόμοιο <span class="arrow">&rarr;</span></a>
-      <p class="lb-hint" id="lb-hint"></p>
-      <div class="lb-items" id="lb-items">
-        <button type="button" class="lb-item-prev">&lsaquo; Προηγούμενη</button>
-        <span id="lb-count"></span>
-        <button type="button" class="lb-item-next">Επόμενη &rsaquo;</button>
-      </div>
-    </div>
-    <button class="lb-close" type="button" aria-label="Κλείσιμο" title="Κλείσιμο"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
-  </div>
-</dialog>
-<section class="cta-section">
-  <div class="container">
-    <div class="cta">
-      <div class="cta-left"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><path d="M22 30c-8-6-12-10-12-15a6 6 0 0 1 12-1 6 6 0 0 1 12 1c0 5-4 9-12 15z"/><path d="M42 24c-6-4.5-9-7.5-9-11a4.5 4.5 0 0 1 9-.8 4.5 4.5 0 0 1 9 .8c0 3.5-3 6.5-9 11z"/><path d="M22 30c2 8-4 14 0 22M42 24c-2 10 6 16 0 28"/></svg><h2>Η δική σου ιδέα, η δική μας δημιουργία</h2></div>
-      <a class="btn" href="epikoinonia.html">Στείλε μας το αίτημά σου <span class="arrow">&rarr;</span></a>
-    </div>
-  </div>
-</section>
-</main>
-<footer class="site-footer">
-  <div class="container">
-    <div class="social">
-      <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg> Instagram</a>
-      <span aria-hidden="true">·</span>
-      <a href="https://www.tiktok.com/@balloona.pop" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.6 5.8A4.3 4.3 0 0 1 15.5 3h-3.1v12.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .5 0 .8.1V9.7a5.8 5.8 0 1 0 5 5.7V9.1a7.4 7.4 0 0 0 4.3 1.4V7.4a4.3 4.3 0 0 1-3.3-1.6z"/></svg> TikTok</a>
-      <span class="handle">@balloona.pop</span>
-    </div>
-    <p class="copyright">© <span id="year">2026</span> Balloona · Luxury Balloon Creations</p>
-  </div>
-</footer>
-<script src="js/main.js"></script>
-</body>
-</html>
+{% include gallery.html %}
+{% include cta.html %}
