@@ -1,9 +1,9 @@
 # Jekyll settings (GitHub Pages builds the site with Jekyll automatically)
 title: Balloona
-url: "https://angeloskatsaliros.github.io"
-baseurl: "/balloona-site"
+url: "https://www.balloona.gr"
+baseurl: ""
 # Address search engines should use for the pages (the final domain)
-canonical_url: "https://balloona.gr"
+canonical_url: "https://www.balloona.gr"
 exclude:
   - README.md
   - .pages.yml

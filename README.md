@@ -35,7 +35,7 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
 2. **Logo:** replace `images/logo.png` with the real logo (square PNG, at least 256px).
 3. **Request form:** requests are emailed through [Web3Forms](https://web3forms.com). The access key is in the
    `access_key` field of `_includes/contact.html` (manage it at web3forms.com).
-4. **Domain:** set `canonical_url` in `_config.yml` (used for the canonical, `hreflang` and `og:` links).
+4. **Domain:** the site is served at https://www.balloona.gr (see `CNAME`; `canonical_url` in `_config.yml` is used for the canonical, `hreflang` and `og:` links). DNS: `www` CNAME → `angeloskatsaliros.github.io`; `balloona.gr` A → 185.199.108.153, 185.199.109.153, 185.199.110.153, 185.199.111.153.
 5. **Hosting:** drag the folder into Netlify Drop (app.netlify.com/drop), or push it to GitHub Pages / Vercel.
 
 ## Editing photos without code (/admin)
