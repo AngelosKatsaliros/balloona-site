@@ -55,6 +55,8 @@
       logout();
       throw new Error(data.error || "Η σύνδεση έληξε. Συνδέσου ξανά.");
     }
+    // An older server does not know newer actions yet
+    if (res.status === 404 && data.error === "Δεν βρέθηκε.") throw new Error("Αυτό χρειάζεται ενημέρωση του server. Ενημέρωσε τον διαχειριστή του site.");
     if (!res.ok) throw new Error(data.error || "Κάτι πήγε στραβά. Δοκίμασε ξανά.");
     return data;
   }
