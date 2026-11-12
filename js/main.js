@@ -56,7 +56,7 @@ const form = document.getElementById('request-form');
 if (form) {
   const status = form.querySelector('.form-status');
   form.addEventListener('submit', async (e) => {
-    if (form.action.includes('YOUR_FORM_ID')) {
+    if (form.querySelector('[name="access_key"]').value === 'YOUR_ACCESS_KEY') {
       e.preventDefault();
       status.textContent = 'Η φόρμα δεν έχει συνδεθεί ακόμη. Στείλτε μας μήνυμα στο Instagram @balloona.pop.';
       status.classList.add('show');
@@ -65,7 +65,8 @@ if (form) {
     e.preventDefault();
     try {
       const res = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } });
-      if (!res.ok) throw new Error();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.success === false) throw new Error();
       form.reset();
       status.textContent = 'Ευχαριστούμε! Λάβαμε το αίτημά σας και θα επικοινωνήσουμε σύντομα.';
     } catch {
