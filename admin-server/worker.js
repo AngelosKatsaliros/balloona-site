@@ -31,6 +31,7 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin/admin.js
 const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
 const MAX_TITLE = 80;
 const MAX_DESCRIPTION = 1500; // keep in sync with admin/admin.js
+const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin/admin.js
 const SESSION_DAYS = 30;
 
 class HttpError extends Error {
@@ -73,6 +74,7 @@ export default {
         else if (route === "POST /gallery/photo") result = await addGalleryPhoto(request, gh);
         else if (route === "POST /upload/blob") result = await uploadBlob(request, gh);
         else if (route === "POST /gallery/video") result = await addGalleryVideo(request, gh);
+        else if (route === "POST /gallery/media") result = await addItemMedia(request, gh);
         else if (route === "PUT /gallery") result = await saveGallery(request, gh);
         else if (route === "POST /home/photo") result = await replaceHomePhoto(request, gh);
         else throw new HttpError(404, "Δεν βρέθηκε.");
@@ -188,7 +190,59 @@ async function addGalleryVideo(request, gh) {
   });
 }
 
-/** Save the whole gallery list (edit titles/categories/descriptions, reorder, delete). Body: { gallery, version } */
+/**
+ * Add another photo or video (another angle) to an existing creation.
+ * Body: { item (path of the creation's cover), image (base64) } or { item, blob, ext, poster } for a video
+ * (upload the video with /upload/blob first).
+ */
+async function addItemMedia(request, gh) {
+  const body = await readJson(request);
+  const key = String(body.item || "");
+  let photo = null;
+  let video = null;
+  if (body.blob) {
+    const blob = String(body.blob);
+    if (!/^[0-9a-f]{40}$/.test(blob)) throw new HttpError(400, "Το βίντεο δεν ανέβηκε σωστά. Δοκίμασε ξανά.");
+    const ext = String(body.ext || "").toLowerCase();
+    if (!VIDEO_EXTS.includes(ext)) throw new HttpError(400, "Υποστηρίζονται βίντεο MP4, MOV ή WEBM.");
+    video = { blob, ext, poster: body.poster ? decodeImage(body.poster) : null };
+  } else {
+    photo = decodeImage(body.image);
+  }
+
+  return gh.withRetry(async () => {
+    const gallery = await gh.readJson(GALLERY_PATH);
+    const list = asList(gallery.data).map((p) => ({ ...p }));
+    const item = list.find((p) => itemKey(p) === key);
+    if (!key || !item) throw new HttpError(404, "Η δημιουργία δεν βρέθηκε. Ανανέωσε τη σελίδα.");
+    const more = Array.isArray(item.more) ? item.more : [];
+    if (more.length + 1 >= MAX_MEDIA) throw new HttpError(400, `Έως ${MAX_MEDIA} φωτογραφίες και βίντεο ανά δημιουργία.`);
+
+    const files = [];
+    let media;
+    if (video) {
+      const videoPath = newImagePath(video.ext);
+      const posterPath = video.poster ? videoPath.replace(/\.[a-z0-9]+$/, "-poster." + video.poster.ext) : null;
+      media = { video: "/" + videoPath, image: posterPath ? "/" + posterPath : "" };
+      files.push({ path: videoPath, sha: video.blob });
+      if (posterPath) files.push({ path: posterPath, base64: video.poster.base64 });
+    } else {
+      const path = newImagePath(photo.ext);
+      media = { image: "/" + path };
+      files.push({ path, base64: photo.base64 });
+    }
+    item.more = [...more, media];
+    files.push({ path: GALLERY_PATH, text: toJson(list) });
+    await gh.commit(`${video ? "Νέο βίντεο" : "Νέα φωτογραφία"} για: ${item.title}`, files);
+    return { ok: true, gallery: list };
+  });
+}
+
+/**
+ * Save the whole gallery list (edit titles/categories/descriptions, reorder, delete, and reorder or
+ * remove the photos/videos inside a creation). Body: { gallery, version }
+ * Each item names its media by path: the cover in image/video, the rest in more: [{image} | {video, image}].
+ */
 async function saveGallery(request, gh) {
   const body = await readJson(request);
   if (!Array.isArray(body.gallery)) throw new HttpError(400, "Λάθος δεδομένα.");
@@ -198,16 +252,37 @@ async function saveGallery(request, gh) {
     throw new HttpError(409, "Έγιναν αλλαγές από άλλη συσκευή. Ανανέωσε τη σελίδα και ξαναδοκίμασε.");
   }
   const current = asList(gallery.data);
-  const byKey = new Map(current.map((p) => [itemKey(p), p]));
+  const unknown = () => new HttpError(400, "Άγνωστη φωτογραφία στη λίστα. Ανανέωσε τη σελίδα.");
+  // Every photo/video already saved, by its path. Items can only use these.
+  const known = new Map();
+  const ownMore = new Map();
+  for (const p of current) {
+    for (const m of mediaOf(p)) known.set(itemKey(m), cleanMedia(m));
+    ownMore.set(itemKey(p), Array.isArray(p.more) ? p.more : []);
+  }
   const list = body.gallery.map((p) => {
-    const saved = p && byKey.get(itemKey(p));
-    if (!saved) throw new HttpError(400, "Άγνωστη φωτογραφία στη λίστα. Ανανέωσε τη σελίδα.");
-    const item = withDescription({ image: saved.image, title: cleanTitle(p.title), category: cleanCategory(p.category) }, cleanDescription(p.description));
-    return saved.video ? { video: saved.video, ...item } : item;
+    if (!p || typeof p !== "object") throw unknown();
+    // An admin page from before multi-photo items sends no "more": keep what the item has
+    const more = Array.isArray(p.more) ? p.more : p.more == null ? ownMore.get(itemKey(p)) || [] : null;
+    if (!more) throw unknown();
+    const keys = [itemKey(p), ...more.map(itemKey)];
+    if (keys.length > MAX_MEDIA) throw new HttpError(400, `Έως ${MAX_MEDIA} φωτογραφίες και βίντεο ανά δημιουργία.`);
+    const media = keys.map((k) => {
+      if (!k || !known.has(k)) throw unknown();
+      return known.get(k);
+    });
+    const [cover, ...rest] = media;
+    const item = { ...(cover.video ? { video: cover.video } : {}), image: cover.image || "" };
+    item.title = cleanTitle(p.title);
+    item.category = cleanCategory(p.category);
+    const description = cleanDescription(p.description);
+    if (description) item.description = description;
+    if (rest.length) item.more = rest;
+    return item;
   });
 
   // Delete photo/video files that nothing uses any more
-  const filesOf = (p) => [p.image, p.video].filter(Boolean);
+  const filesOf = (p) => mediaOf(p).flatMap((m) => [m.image, m.video]).filter(Boolean);
   const stillUsed = new Set([...list.flatMap(filesOf), ...Object.values(home.data || {})]);
   const removed = [...new Set(current.flatMap(filesOf))].filter((f) => !stillUsed.has(f) && isUpload(f));
 
@@ -228,7 +303,7 @@ async function replaceHomePhoto(request, gh) {
     const path = newImagePath(image.ext);
     const old = home.data[slot];
     const next = { ...home.data, [slot]: "/" + path };
-    const stillUsed = new Set([...asList(gallery.data).flatMap((p) => [p.image, p.video]), ...Object.values(next)]);
+    const stillUsed = new Set([...asList(gallery.data).flatMap(mediaOf).flatMap((m) => [m.image, m.video]), ...Object.values(next)]);
     const files = [
       { path, base64: image.base64 },
       { path: HOME_PATH, text: toJson(next) },
@@ -404,8 +479,18 @@ function isUpload(img) {
   return typeof img === "string" && img.startsWith(`/${UPLOAD_DIR}/`) && !img.includes("..");
 }
 
+/** The path that identifies a creation (its cover) or one of its photos/videos */
 function itemKey(p) {
-  return (p && (p.video || p.image)) || "";
+  return (p && typeof p === "object" && (p.video || p.image)) || "";
+}
+
+/** All photos/videos of a creation: the cover first, then the extra angles */
+function mediaOf(p) {
+  return [p, ...(Array.isArray(p.more) ? p.more : [])].filter((m) => m && typeof m === "object");
+}
+
+function cleanMedia(m) {
+  return m.video ? { video: m.video, image: m.image || "" } : { image: m.image };
 }
 
 function asList(data) {

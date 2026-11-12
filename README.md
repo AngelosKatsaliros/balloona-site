@@ -25,9 +25,12 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
   (home page and Στολισμοί). GitHub Pages builds the pages from these lists with Jekyll.
 - `admin/` is a Greek admin page at `/admin/`: log in with a password, upload a photo (resized in the
   browser to max 1800px) or a video (max 50 MB, a cover frame is captured automatically), set title and
-  category and an optional description, reorder, delete, and swap home page photos.
+  category and an optional description, add more photos/videos to a creation (other angles, up to 12,
+  stored in its `more` list; the first one is the cover shown in the grid), reorder, delete, and swap
+  home page photos.
 - On Δημιουργίες, clicking a card opens a lightbox: the photo can be zoomed (click/tap, mouse wheel, pinch,
-  +/− buttons) and the item's `description` shows beside it (below on phones), with a «Θέλω κάτι παρόμοιο»
+  +/− buttons), thumbnails switch between its photos/videos, and the item's `description` shows beside it
+  (below on phones), with a «Θέλω κάτι παρόμοιο»
   button that fills in the request form. Gallery videos play muted on a loop and with sound in the lightbox.
 - `admin-server/worker.js` is a small Cloudflare Worker that checks the password and commits the changes
   to this repository. Setup steps: `admin-server/SETUP.md`.

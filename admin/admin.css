@@ -73,6 +73,27 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--rose); outl
 .item-fields input, .item-fields select, .item-fields textarea { background: var(--white); }
 .item-fields textarea { grid-column: 1 / -1; font-size: 15px; padding: 8px 12px; overflow: hidden; }
 .item-actions { display: flex; gap: 6px; }
+.thumb .count { position: absolute; right: 4px; top: 4px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: rgba(94, 22, 34, 0.85); color: #fff; font-size: 12px; font-weight: 600; display: grid; place-items: center; }
+.strip { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.mthumb { width: 72px; display: flex; flex-direction: column; gap: 3px; }
+.mimg { position: relative; width: 72px; height: 72px; border-radius: 6px; overflow: hidden; background: var(--blush); display: grid; place-items: center; color: var(--burgundy); }
+.mthumb.cover .mimg { outline: 2px solid var(--gold); outline-offset: 1px; }
+.mimg img { width: 100%; height: 100%; object-fit: cover; }
+.mvid { position: absolute; left: 3px; bottom: 3px; width: 18px; height: 18px; border-radius: 50%; background: rgba(94, 22, 34, 0.85); color: #fff; font-size: 9px; display: grid; place-items: center; }
+.mcover { position: absolute; left: 0; right: 0; top: 0; background: rgba(200, 164, 106, 0.92); color: #fff; font-size: 10px; font-weight: 600; text-align: center; line-height: 16px; letter-spacing: .04em; }
+.mtools { display: flex; gap: 2px; }
+.mtools button { flex: 1; height: 26px; padding: 0; border: 1px solid var(--blush-2); border-radius: 5px; background: var(--white); color: var(--burgundy); font: inherit; font-size: 14px; line-height: 1; cursor: pointer; }
+.mtools button:hover:not(:disabled) { background: var(--blush); }
+.mtools button:disabled { opacity: 0.3; cursor: default; }
+.mtools button.danger { color: var(--danger); font-size: 12px; }
+.madd { position: relative; width: 72px; height: 72px; border: 2px dashed var(--blush-2); border-radius: 6px; display: grid; place-content: center; text-align: center; color: var(--burgundy); cursor: pointer; background: var(--white); line-height: 1.1; }
+.madd span { font-size: 22px; }
+.madd small { font-size: 11px; font-weight: 600; }
+.madd:hover { border-color: var(--rose); background: var(--blush); }
+.madd input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; min-height: 0; }
+.madd.busy { cursor: wait; border-style: solid; border-color: var(--rose); }
+.madd.busy span { display: none; }
+body.uploading .madd input, body.uploading .mtools button { pointer-events: none; }
 .icon-btn { width: 44px; height: 44px; border-radius: 8px; border: 1px solid var(--blush-2); background: var(--white); color: var(--burgundy); font-size: 18px; cursor: pointer; }
 .icon-btn:hover:not(:disabled) { background: var(--blush); }
 .icon-btn:disabled { opacity: 0.35; cursor: default; }
@@ -102,6 +123,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--rose); outl
   .thumb { width: 72px; height: 72px; }
   .item-fields { grid-template-columns: 1fr; }
   .item-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  .mtools button { height: 32px; }
   .brand-sub { display: none; }
   .card { padding: 18px; }
 }

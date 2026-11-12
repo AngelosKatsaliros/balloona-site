@@ -160,24 +160,79 @@ if (lb && typeof lb.showModal === 'function') {
   window.addEventListener('resize', () => { if (lb.open) apply(false); });
 
   // --- open / show / close ---
-  function show(i) {
+  const thumbs = document.getElementById('lb-thumbs');
+  const card = lb.querySelector('.lb-card');
+  const itemPrev = lb.querySelector('.lb-item-prev');
+  const itemNext = lb.querySelector('.lb-item-next');
+  let media = [];
+  let mIndex = 0;
+
+  // A creation's photos/videos: the one shown in the gallery first, then the extra angles
+  function mediaOf(fig) {
+    const v = fig.querySelector('.media video');
+    const im = fig.querySelector('.media img');
+    const cover = v ? { video: v.getAttribute('src'), image: v.getAttribute('poster') || '' } : { image: im.currentSrc || im.getAttribute('src') };
+    const more = [...fig.querySelectorAll('.item-more li')].map((li) => ({ video: li.dataset.video || '', image: li.dataset.image || '' }));
+    return [cover, ...more].filter((m) => m.video || m.image);
+  }
+
+  function showItem(i, at) {
     index = (i + items.length) % items.length;
     const fig = items[index];
-    const gridVideo = fig.querySelector('video');
-    const gridImg = fig.querySelector('img');
     const title = fig.querySelector('.open-item').textContent.trim();
     const cat = fig.querySelector('figcaption small').textContent.trim();
-    const text = (fig.querySelector('.item-desc') || {}).textContent || '';
+    const text = ((fig.querySelector('.item-desc') || {}).textContent || '').trim();
+    media = mediaOf(fig);
 
+    document.getElementById('lb-cat').textContent = cat;
+    document.getElementById('lb-title').textContent = title;
+    desc.textContent = text || 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!';
+    desc.classList.toggle('placeholder', !text);
+    cta.href = 'epikoinonia.html?gia=' + encodeURIComponent(title) + '&cat=' + encodeURIComponent(fig.dataset.cat || '');
+    document.getElementById('lb-count').textContent = items.length > 1 ? `Δημιουργία ${index + 1}\u00a0από\u00a0${items.length}` : '';
+    document.getElementById('lb-items').hidden = items.length < 2;
+
+    thumbs.hidden = media.length < 2;
+    card.classList.toggle('lb-has-thumbs', media.length > 1);
+    thumbs.innerHTML = '';
+    if (media.length > 1) {
+      media.forEach((m, j) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.dataset.j = j;
+        b.setAttribute('aria-label', `${m.video ? 'Βίντεο' : 'Φωτογραφία'} ${j + 1} από ${media.length}`);
+        if (m.image) {
+          const t = document.createElement('img');
+          t.src = m.image;
+          t.alt = '';
+          t.loading = 'lazy';
+          b.append(t);
+        }
+        if (m.video) {
+          const play = document.createElement('span');
+          play.className = 'play';
+          b.append(play);
+        }
+        thumbs.append(b);
+      });
+    }
+    prevBtn.hidden = nextBtn.hidden = items.length < 2 && media.length < 2;
+    showMedia(at === 'last' ? media.length - 1 : at || 0);
+  }
+
+  function showMedia(j) {
+    mIndex = j;
+    const m = media[j];
+    const title = document.getElementById('lb-title').textContent;
     resetZoom();
     video.pause();
-    if (gridVideo) {
+    if (m.video) {
       img.hidden = true;
       img.removeAttribute('src');
       zoomBar.hidden = true;
       video.hidden = false;
-      video.poster = gridVideo.getAttribute('poster') || '';
-      video.src = gridVideo.getAttribute('src');
+      video.poster = m.image || '';
+      video.src = m.video;
       video.muted = false;
       video.play().catch(() => {});
     } else {
@@ -186,19 +241,37 @@ if (lb && typeof lb.showModal === 'function') {
       video.load();
       zoomBar.hidden = false;
       img.hidden = false;
-      img.alt = title;
-      img.src = gridImg.currentSrc || gridImg.src;
+      img.alt = media.length > 1 ? `${title} (${j + 1} από ${media.length})` : title;
+      img.src = m.image;
     }
-    document.getElementById('lb-cat').textContent = cat;
-    document.getElementById('lb-title').textContent = title;
-    desc.textContent = text.trim() || 'Κάθε δημιουργία φτιάχνεται στο χέρι, στα χρώματα και με το όνομα ή την ευχή που θέλετε εσείς. Στείλτε μας την ιδέα σας!';
-    desc.classList.toggle('placeholder', !text.trim());
-    cta.href = 'epikoinonia.html?gia=' + encodeURIComponent(title) + '&cat=' + encodeURIComponent(fig.dataset.cat || '');
-    hint.textContent = (gridVideo ? '' : (touch ? 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση. ' : 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση. '))
-      + (items.length > 1 ? `${index + 1} από ${items.length}` : '');
-    prevBtn.hidden = nextBtn.hidden = items.length < 2;
+    thumbs.querySelectorAll('button').forEach((b) => {
+      const on = +b.dataset.j === j;
+      b.setAttribute('aria-current', on);
+      if (on && !thumbs.hidden) { // keep the current thumbnail in view, centred
+        const r = b.getBoundingClientRect(), t = thumbs.getBoundingClientRect();
+        thumbs.scrollLeft += (r.left + r.width / 2) - (t.left + t.width / 2);
+      }
+    });
+    hint.textContent = [
+      media.length > 1 ? `${m.video ? 'Βίντεο' : 'Φωτογραφία'} ${j + 1} από ${media.length}.` : '',
+      m.video ? '' : (touch ? 'Πάτα ή άνοιξε με δύο δάχτυλα για μεγέθυνση.' : 'Πάτα στη φωτογραφία ή γύρνα τη ροδέλα για μεγέθυνση.'),
+    ].filter(Boolean).join(' ');
   }
-  function go(step) { if (items.length > 1) show(index + step); }
+
+  // Arrows, swipes and keys go through every photo of a creation, then on to the next creation
+  function go(step) {
+    const j = mIndex + step;
+    if (j >= 0 && j < media.length) showMedia(j);
+    else if (items.length > 1) showItem(index + step, step < 0 ? 'last' : 0);
+    else if (media.length > 1) showMedia((j + media.length) % media.length);
+  }
+
+  thumbs.addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-j]');
+    if (b) showMedia(+b.dataset.j);
+  });
+  itemPrev.addEventListener('click', () => showItem(index - 1));
+  itemNext.addEventListener('click', () => showItem(index + 1));
 
   function open(fig) {
     items = [...document.querySelectorAll('.gallery figure')].filter((f) => !f.classList.contains('hidden'));
@@ -207,7 +280,7 @@ if (lb && typeof lb.showModal === 'function') {
     gridVideos.forEach((v) => v.pause());
     document.body.classList.add('lb-open');
     lb.showModal();
-    show(items.indexOf(fig));
+    showItem(items.indexOf(fig));
     lb.querySelector('.lb-close').focus();
   }
   lb.addEventListener('close', () => {

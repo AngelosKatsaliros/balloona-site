@@ -67,13 +67,14 @@
     </div>
     <div class="gallery">
 {% for p in site.data.gallery %}{% if p.image or p.video %}
-      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span></div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ p.title | escape }}</button><small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption>{% if p.description %}<div class="item-desc" hidden>{{ p.description | strip | escape }}</div>{% endif %}</figure>
+      <figure data-cat="{{ p.category }}"{% if p.video %} class="is-video"{% endif %}><div class="media">{% if p.video %}<video src="{% include src.html path=p.video %}"{% if p.image %} poster="{% include src.html path=p.image %}"{% endif %} muted loop playsinline preload="{% if p.image %}none{% else %}metadata{% endif %}" aria-hidden="true"></video>{% else %}<img src="{% include src.html path=p.image %}" alt="{{ p.title | escape }}" loading="lazy">{% endif %}<span class="media-badge" aria-hidden="true"></span>{% if p.more.size > 0 %}<span class="media-count" aria-hidden="true">{{ p.more.size | plus: 1 }}</span>{% endif %}</div><figcaption><button class="open-item" type="button" aria-haspopup="dialog">{{ p.title | escape }}</button><small>{% case p.category %}{% when 'dora' %}Προσωποποιημένα δώρα{% when 'genethlia' %}Γενέθλια{% when 'vaptiseis' %}Βαπτίσεις &amp; εκδηλώσεις{% endcase %}</small></figcaption>{% if p.description %}<div class="item-desc" hidden>{{ p.description | strip | escape }}</div>{% endif %}{% if p.more.size > 0 %}<ul class="item-more" hidden>{% for m in p.more %}<li{% if m.video %} data-video="{% include src.html path=m.video %}"{% endif %}{% if m.image and m.image != "" %} data-image="{% include src.html path=m.image %}"{% endif %}></li>{% endfor %}</ul>{% endif %}</figure>
 {% endif %}{% endfor %}
     </div>
   </div>
 </section>
 <dialog class="lightbox" id="lightbox" aria-labelledby="lb-title">
   <div class="lb-card">
+    <div class="lb-media">
     <div class="lb-stage" id="lb-stage">
       <img class="lb-img" id="lb-img" alt="" draggable="false">
       <video class="lb-video" id="lb-video" controls playsinline loop hidden></video>
@@ -81,8 +82,10 @@
         <button type="button" data-zoom="out" aria-label="Σμίκρυνση" title="Σμίκρυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
         <button type="button" data-zoom="in" aria-label="Μεγέθυνση" title="Μεγέθυνση"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       </div>
-      <button class="lb-nav lb-prev" type="button" aria-label="Προηγούμενη δημιουργία"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
-      <button class="lb-nav lb-next" type="button" aria-label="Επόμενη δημιουργία"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+      <button class="lb-nav lb-prev" type="button" aria-label="Προηγούμενη"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg></button>
+      <button class="lb-nav lb-next" type="button" aria-label="Επόμενη"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button>
+    </div>
+    <div class="lb-thumbs" id="lb-thumbs" role="group" aria-label="Φωτογραφίες και βίντεο της δημιουργίας" hidden></div>
     </div>
     <div class="lb-info">
       <p class="lb-cat" id="lb-cat"></p>
@@ -91,6 +94,11 @@
       <div class="lb-desc" id="lb-desc"></div>
       <a class="btn" id="lb-cta" href="epikoinonia.html">Θέλω κάτι παρόμοιο <span class="arrow">&rarr;</span></a>
       <p class="lb-hint" id="lb-hint"></p>
+      <div class="lb-items" id="lb-items">
+        <button type="button" class="lb-item-prev">&lsaquo; Προηγούμενη</button>
+        <span id="lb-count"></span>
+        <button type="button" class="lb-item-next">Επόμενη &rsaquo;</button>
+      </div>
     </div>
     <button class="lb-close" type="button" aria-label="Κλείσιμο" title="Κλείσιμο"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
   </div>

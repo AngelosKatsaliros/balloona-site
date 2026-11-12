@@ -17,6 +17,7 @@
   const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // keep in sync with admin-server/worker.js
   const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
   const MAX_DESCRIPTION = 1500; // keep in sync with admin-server/worker.js
+  const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin-server/worker.js
   const OLD_SERVER = "Οι περιγραφές δεν αποθηκεύτηκαν: ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
 
   const $ = (id) => document.getElementById(id);
@@ -28,7 +29,7 @@
 
   const API = (window.BALLOONA_ADMIN_API || "").replace(/\/+$/, "");
   let token = store.get(TOKEN_KEY);
-  let state = { gallery: [], saved: [], home: {}, version: "", rawBase: "" };
+  let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "" };
   let addImage = null; // data URL of the resized photo to add
   let addVideo = null; // { file, ext, poster } of the video to add
   const DROP_TEXT = "<strong>Πάτα για να διαλέξεις φωτογραφία ή βίντεο</strong><br><small>ή σύρε το αρχείο εδώ</small>";
@@ -90,8 +91,9 @@
   /* ---------- Load ---------- */
   async function load() {
     const data = await api("GET", "/content");
-    state.gallery = data.gallery.map((p) => ({ ...p }));
-    state.saved = JSON.stringify(data.gallery);
+    state.savedData = JSON.stringify(data.gallery);
+    state.gallery = JSON.parse(state.savedData);
+    state.saved = canon(data.gallery);
     state.home = data.home;
     state.version = data.version;
     state.rawBase = data.rawBase;
@@ -99,8 +101,36 @@
     renderHome();
   }
 
+  // Compare lists by content only (key order and empty fields do not count as changes)
+  function canon(list) {
+    return JSON.stringify(list.map((p) => [p.title, p.category, (p.description || "").trim(), getMedia(p).map((m) => [m.video || "", m.image || ""])]));
+  }
+
   function dirty() {
-    return JSON.stringify(state.gallery) !== state.saved;
+    return canon(state.gallery) !== state.saved;
+  }
+
+  /* A creation's photos/videos: the cover (image/video fields of the item) first, then "more" */
+  function mediaKey(m) {
+    return (m && (m.video || m.image)) || "";
+  }
+
+  function getMedia(p) {
+    const cover = p.video ? { video: p.video, image: p.image || "" } : { image: p.image };
+    return [cover, ...(Array.isArray(p.more) ? p.more : [])];
+  }
+
+  function setMedia(p, media) {
+    const [cover, ...more] = media;
+    delete p.video;
+    if (cover.video) p.video = cover.video;
+    p.image = cover.image || "";
+    if (more.length) p.more = more;
+    else delete p.more;
+  }
+
+  function mediaThumb(m) {
+    return m.image ? `<img src="${esc(imgUrl(m.image))}" alt="" loading="lazy">` : `<span class="noimg">▶</span>`;
   }
 
   /* ---------- Gallery ---------- */
@@ -115,20 +145,35 @@
     if (!state.gallery.length) {
       list.innerHTML = `<li class="empty">Δεν υπάρχουν ακόμη φωτογραφίες.</li>`;
     } else {
-      list.innerHTML = state.gallery.map((p, i) => `
+      list.innerHTML = state.gallery.map((p, i) => {
+        const media = getMedia(p);
+        return `
         <li class="item" data-i="${i}">
-          <div class="thumb">${p.image ? `<img src="${esc(imgUrl(p.image))}" alt="" loading="lazy">` : "▶"}${p.video ? `<span class="badge">▶ Βίντεο</span>` : ""}</div>
+          <div class="thumb">${p.image ? `<img src="${esc(imgUrl(p.image))}" alt="" loading="lazy">` : "▶"}${p.video ? `<span class="badge">▶ Βίντεο</span>` : ""}${media.length > 1 ? `<span class="count" title="${media.length} φωτογραφίες/βίντεο">${media.length}</span>` : ""}</div>
           <div class="item-fields">
             <input data-field="title" value="${esc(p.title)}" maxlength="80" aria-label="Τίτλος">
             <select data-field="category" aria-label="Κατηγορία">${categoryOptions(p.category)}</select>
             <textarea data-field="description" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Περιγραφή (προαιρετικό)" aria-label="Περιγραφή">${esc(p.description)}</textarea>
+            <div class="strip" aria-label="Φωτογραφίες και βίντεο της δημιουργίας">
+              ${media.map((m, j) => `
+              <div class="mthumb${j === 0 ? " cover" : ""}" data-j="${j}">
+                <div class="mimg">${mediaThumb(m)}${m.video ? `<span class="mvid">▶</span>` : ""}${j === 0 ? `<span class="mcover">Κύρια</span>` : ""}</div>
+                <div class="mtools"${media.length === 1 ? " hidden" : ""}>
+                  <button type="button" data-mact="left" title="Πιο μπροστά" aria-label="Πιο μπροστά" ${j === 0 ? "disabled" : ""}>‹</button>
+                  <button type="button" data-mact="right" title="Πιο πίσω" aria-label="Πιο πίσω" ${j === media.length - 1 ? "disabled" : ""}>›</button>
+                  <button type="button" data-mact="remove" class="danger" title="Αφαίρεση" aria-label="Αφαίρεση" ${media.length === 1 ? "disabled" : ""}>✕</button>
+                </div>
+              </div>`).join("")}
+              ${media.length < MAX_MEDIA ? `<label class="madd" title="Πρόσθεσε κι άλλες φωτογραφίες ή βίντεο αυτής της δημιουργίας"><span>+</span><small>Προσθήκη</small><input type="file" accept="image/*,video/*" multiple data-add-media></label>` : ""}
+            </div>
           </div>
           <div class="item-actions">
             <button class="icon-btn" data-act="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
             <button class="icon-btn" data-act="down" title="Μετακίνηση κάτω" aria-label="Μετακίνηση κάτω" ${i === state.gallery.length - 1 ? "disabled" : ""}>↓</button>
             <button class="icon-btn danger" data-act="delete" title="Διαγραφή" aria-label="Διαγραφή">🗑</button>
           </div>
-        </li>`).join("");
+        </li>`;
+      }).join("");
     }
     list.querySelectorAll("textarea").forEach(grow);
     $("savebar").hidden = !dirty();
@@ -146,6 +191,7 @@
     if (!li) return;
     const item = state.gallery[+li.dataset.i];
     const field = e.target.dataset.field;
+    if (!field) return; // e.g. the "add photos" file input
     if (field === "description") {
       grow(e.target);
       if (e.target.value.trim()) item.description = e.target.value;
@@ -163,6 +209,18 @@
   }
 
   $("list").addEventListener("click", (e) => {
+    const mbtn = e.target.closest("button[data-mact]");
+    if (mbtn) {
+      const p = state.gallery[+mbtn.closest(".item").dataset.i];
+      const j = +mbtn.closest(".mthumb").dataset.j;
+      const media = getMedia(p);
+      if (mbtn.dataset.mact === "left" && j > 0) [media[j - 1], media[j]] = [media[j], media[j - 1]];
+      if (mbtn.dataset.mact === "right" && j < media.length - 1) [media[j + 1], media[j]] = [media[j], media[j + 1]];
+      if (mbtn.dataset.mact === "remove" && media.length > 1) media.splice(j, 1);
+      setMedia(p, media);
+      renderGallery();
+      return;
+    }
     const btn = e.target.closest("button[data-act]");
     if (!btn) return;
     const i = +btn.closest(".item").dataset.i;
@@ -170,8 +228,9 @@
     if (btn.dataset.act === "up" && i > 0) [g[i - 1], g[i]] = [g[i], g[i - 1]];
     if (btn.dataset.act === "down" && i < g.length - 1) [g[i + 1], g[i]] = [g[i], g[i + 1]];
     if (btn.dataset.act === "delete") {
-      const what = g[i].video ? "το βίντεο" : "η φωτογραφία";
-      if (!confirm(`Να αφαιρεθεί ${what} «${g[i].title}»;\n\nΘα σβηστεί από το site όταν πατήσεις «Αποθήκευση».`)) return;
+      const n = getMedia(g[i]).length;
+      const what = n > 1 ? `η δημιουργία «${g[i].title}» με όλες τις ${n} φωτογραφίες/βίντεο της` : `${g[i].video ? "το βίντεο" : "η φωτογραφία"} «${g[i].title}»`;
+      if (!confirm(`Να αφαιρεθεί ${what};\n\nΘα σβηστεί από το site όταν πατήσεις «Αποθήκευση».`)) return;
       g.splice(i, 1);
     }
     renderGallery();
@@ -185,7 +244,8 @@
     btn.disabled = true;
     btn.textContent = "Αποθήκευση…";
     try {
-      const res = await api("PUT", "/gallery", { gallery: state.gallery, version: state.version });
+      const gallery = state.gallery.map((p) => ({ ...p, more: p.more || [] }));
+      const res = await api("PUT", "/gallery", { gallery, version: state.version });
       const lost = descriptionsLost(state.gallery, res.gallery);
       await load();
       if (lost) toast(OLD_SERVER, true);
@@ -199,12 +259,53 @@
   });
 
   $("discard").addEventListener("click", () => {
-    state.gallery = JSON.parse(state.saved);
+    state.gallery = JSON.parse(state.savedData);
     renderGallery();
   });
 
+  /* ---------- More photos/videos of a creation ---------- */
+  $("list").addEventListener("change", async (e) => {
+    const input = e.target.closest("input[data-add-media]");
+    if (!input) return;
+    const files = [...input.files];
+    input.value = "";
+    if (!files.length) return;
+    if (dirty()) return toast("Πάτα πρώτα «Αποθήκευση» ή «Ακύρωση» για τις αλλαγές στη λίστα και μετά πρόσθεσε φωτογραφίες.", true);
+    const p = state.gallery[+input.closest(".item").dataset.i];
+    const key = mediaKey(p);
+    const room = MAX_MEDIA - getMedia(p).length;
+    if (files.length > room) return toast(`Χωράνε ακόμη ${room} φωτογραφίες ή βίντεο σε αυτή τη δημιουργία (έως ${MAX_MEDIA}).`, true);
+    const label = input.closest(".madd");
+    const status = label.querySelector("small");
+    label.classList.add("busy");
+    document.body.classList.add("uploading");
+    let added = 0;
+    try {
+      for (const file of files) {
+        const step = files.length > 1 ? ` ${added + 1}/${files.length}` : "";
+        status.textContent = "Ανέβασμα" + step + "…";
+        if (isVideo(file)) {
+          const v = await prepareVideo(file);
+          const sha = await uploadVideoBlob(v.file, (pct) => { status.textContent = `${pct}%${step}`; });
+          status.textContent = "Αποθήκευση…";
+          await api("POST", "/gallery/media", { item: key, blob: sha, ext: v.ext, poster: v.poster });
+        } else {
+          const image = await resizeImage(file);
+          await api("POST", "/gallery/media", { item: key, image });
+        }
+        added++;
+      }
+      toast(added === 1 ? "Προστέθηκε! Θα φανεί στο site σε 1–2 λεπτά." : `Προστέθηκαν ${added}! Θα φανούν στο site σε 1–2 λεπτά.`);
+    } catch (err) {
+      toast((added ? `Προστέθηκαν ${added} από ${files.length}. ` : "") + err.message, true);
+    } finally {
+      document.body.classList.remove("uploading");
+      try { await load(); } catch (err) { toast(err.message, true); }
+    }
+  });
+
   window.addEventListener("beforeunload", (e) => {
-    if (dirty()) { e.preventDefault(); e.returnValue = ""; }
+    if (dirty() || document.body.classList.contains("uploading")) { e.preventDefault(); e.returnValue = ""; }
   });
 
   /* ---------- Add photo ---------- */
@@ -227,12 +328,7 @@
     $("drop-text").innerHTML = "Επεξεργασία…";
     try {
       if (isVideo(file)) {
-        if (file.size > MAX_VIDEO_BYTES) {
-          throw new Error(`Το βίντεο είναι ${Math.ceil(file.size / 1024 / 1024)} MB. Το μέγιστο είναι ${MAX_VIDEO_BYTES / 1024 / 1024} MB: κόψε το σε λιγότερα δευτερόλεπτα από το κινητό σου και ξαναδοκίμασε.`);
-        }
-        const ext = videoExt(file);
-        const poster = await videoPoster(file).catch(() => null);
-        addVideo = { file, ext, poster };
+        addVideo = await prepareVideo(file);
         const vp = $("add-video-preview");
         vp.src = URL.createObjectURL(file);
         vp.hidden = false;
@@ -290,6 +386,13 @@
   });
 
   /* ---------- Videos ---------- */
+  async function prepareVideo(file) {
+    if (file.size > MAX_VIDEO_BYTES) {
+      throw new Error(`Το βίντεο είναι ${Math.ceil(file.size / 1024 / 1024)} MB. Το μέγιστο είναι ${MAX_VIDEO_BYTES / 1024 / 1024} MB: κόψε το σε λιγότερα δευτερόλεπτα από το κινητό σου και ξαναδοκίμασε.`);
+    }
+    return { file, ext: videoExt(file), poster: await videoPoster(file).catch(() => null) };
+  }
+
   function videoExt(file) {
     const fromName = (file.name.split(".").pop() || "").toLowerCase();
     if (VIDEO_EXTS.includes(fromName)) return fromName;
