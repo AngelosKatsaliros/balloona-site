@@ -2,7 +2,12 @@
   {
     "image": "/images/uploads/gift.jpg",
     "title": "Bobo με όνομα",
-    "category": "dora"
+    "category": "dora",
+    "more": [
+      {
+        "image": "/images/uploads/20261112-04147016.jpg"
+      }
+    ]
   },
   {
     "image": "/images/uploads/hero.jpg",
