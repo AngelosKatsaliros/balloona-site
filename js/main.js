@@ -411,3 +411,22 @@ if (form) {
     status.classList.add('show');
   });
 }
+
+// Visit counter for the admin's «Επισκέψεις» tab: one small request per page view, no cookies.
+// Visits from a device that is logged in to /admin are not counted.
+(() => {
+  const url = document.body.dataset.stats;
+  const ref = document.body.dataset.ref;
+  if (!url || !ref || navigator.webdriver) return;
+  try { if (localStorage.getItem('balloona-admin-token')) return; } catch {}
+  let r = '';
+  try { const h = new URL(document.referrer).hostname; if (h !== location.hostname) r = h; } catch {}
+  const q = new URLSearchParams(location.search);
+  const coarse = window.matchMedia && matchMedia('(pointer: coarse)').matches;
+  const dev = !coarse ? 'desktop' : Math.min(screen.width, screen.height) >= 600 ? 'tablet' : 'mobile';
+  const body = JSON.stringify({ ref, lang: document.documentElement.lang, dev, r, u: q.get('utm_source') || q.get('ref') || '' });
+  try {
+    if (navigator.sendBeacon && navigator.sendBeacon(url, new Blob([body], { type: 'text/plain' }))) return;
+  } catch {}
+  fetch(url, { method: 'POST', body, keepalive: true, mode: 'no-cors' }).catch(() => {});
+})();

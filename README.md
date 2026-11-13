@@ -59,6 +59,12 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
   button that fills in the request form. Gallery videos play muted on a loop and with sound in the lightbox.
 - `admin-server/worker.js` is a small Cloudflare Worker that checks the password and commits the changes
   to this repository. Setup steps: `admin-server/SETUP.md`.
+- The admin's «Επισκέψεις» tab shows visits, page views, pages, sources (Instagram, Google, TikTok, …),
+  countries and devices for the last 7 days, 30 days or 3 months. `js/main.js` sends one small request per
+  page view to the worker's `/hit` (address in `stats_url`, `_config.yml`); the worker stores it in a D1
+  database bound as `STATS` (see `admin-server/SETUP.md`). No cookies: a visitor is recognised only within
+  one day, through a hash with a salt that changes daily. Bots, automated browsers and devices logged in to
+  /admin are not counted.
 - `.github/workflows/optimize-images.yml` shrinks any oversized photo that reaches `images/uploads/`
   another way (for example uploaded directly on GitHub).
 - Preview locally: `jekyll serve` (plain `index.html` in a browser does not show the photos, because the pages are templates).

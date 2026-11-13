@@ -16,7 +16,7 @@
   <div class="wrap bar-inner">
     <a class="brand" href="../" title="Άνοιγμα του site">
       <img src="../images/logo.png" alt="" width="40" height="40">
-      <span><span class="brand-name">Balloona</span><span class="brand-sub">Διαχείριση φωτογραφιών</span></span>
+      <span><span class="brand-name">Balloona</span><span class="brand-sub">Διαχείριση site</span></span>
     </a>
     <div class="bar-actions">
       <a class="link" href="../" target="_blank" rel="noopener">Δες το site ↗</a>
@@ -52,6 +52,7 @@
       <button class="tab active" role="tab" data-tab="gallery" aria-selected="true">Δημιουργίες</button>
       <button class="tab" role="tab" data-tab="categories" aria-selected="false">Κατηγορίες</button>
       <button class="tab" role="tab" data-tab="home" aria-selected="false">Αρχική σελίδα</button>
+      <button class="tab" role="tab" data-tab="stats" aria-selected="false">Επισκέψεις</button>
     </nav>
 
     <div id="tab-gallery">
@@ -135,6 +136,21 @@
           <button class="btn" type="submit">+ Προσθήκη</button>
         </form>
         <p class="muted small">Για να μπει μια δημιουργία σε νέα κατηγορία: πρόσθεσε την κατηγορία, πάτα «Αποθήκευση» και μετά διάλεξέ τη στην καρτέλα «Δημιουργίες».</p>
+      </div>
+    </div>
+
+    <div id="tab-stats" hidden>
+      <div class="card">
+        <div class="stats-head">
+          <h2>Επισκέψεις στο site</h2>
+          <div class="seg" id="stats-period" role="group" aria-label="Περίοδος">
+            <button type="button" data-days="7" aria-pressed="false">7 ημέρες</button>
+            <button type="button" data-days="30" aria-pressed="true">30 ημέρες</button>
+            <button type="button" data-days="90" aria-pressed="false">3 μήνες</button>
+          </div>
+        </div>
+        <div id="stats-body" aria-live="polite"><p class="muted">Φόρτωση…</p></div>
+        <p class="muted small stats-note">Η μέτρηση γίνεται χωρίς cookies και χωρίς προσωπικά στοιχεία. Οι επισκέψεις από συσκευές όπου έχεις συνδεθεί στο admin δεν μετράνε.</p>
       </div>
     </div>
 

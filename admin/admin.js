@@ -678,6 +678,201 @@
     return canvas.toDataURL("image/jpeg", JPEG_QUALITY);
   }
 
+  /* ---------- Visits (Επισκέψεις) ---------- */
+  const PAGE_NAMES = { home: "Αρχική", creations: "Δημιουργίες", decorations: "Στολισμοί", about: "Για εμένα", contact: "Επικοινωνία" };
+  const LANG_TAGS = { el: "ΕΛ", en: "EN", de: "DE" };
+  const LANG_NAMES = { el: "Ελληνικά", en: "Αγγλικά", de: "Γερμανικά" };
+  const SOURCE_NAMES = { "": "Απευθείας ή άγνωστο", google: "Google", instagram: "Instagram", tiktok: "TikTok", facebook: "Facebook", bing: "Bing" };
+  const DEVICE_NAMES = { mobile: "Κινητό", tablet: "Tablet", desktop: "Υπολογιστής" };
+  const numFmt = new Intl.NumberFormat("el-GR");
+  const nf = (n) => numFmt.format(n);
+  const regionNames = (() => { try { return new Intl.DisplayNames(["el"], { type: "region" }); } catch { return null; } })();
+  const countryName = (c) => { if (!c) return "Άγνωστη χώρα"; try { return (regionNames && regionNames.of(c)) || c; } catch { return c; } };
+  const dayDate = (day) => new Date(day + "T12:00:00Z");
+  const fmtDay = (day, opts) => dayDate(day).toLocaleDateString("el-GR", { timeZone: "UTC", ...opts });
+  let statsDays = 30;
+  let statsSeq = 0;
+
+  async function loadStats() {
+    const seq = ++statsSeq;
+    const body = $("stats-body");
+    body.setAttribute("aria-busy", "true");
+    try {
+      const data = await api("GET", "/stats?days=" + statsDays);
+      if (seq !== statsSeq) return;
+      if (!data.ready) {
+        body.innerHTML = statsSetupHtml();
+      } else {
+        body.innerHTML = statsHtml(data);
+        wireChart(data);
+      }
+    } catch (err) {
+      if (seq !== statsSeq) return;
+      body.innerHTML = `<p class="error">${esc(err.message)}</p>`;
+    } finally {
+      if (seq === statsSeq) body.removeAttribute("aria-busy");
+    }
+  }
+
+  $("stats-period").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-days]");
+    if (!btn) return;
+    statsDays = Number(btn.dataset.days);
+    $("stats-period").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b === btn));
+    loadStats();
+  });
+
+  function statsSetupHtml() {
+    return `<div class="stats-setup">
+      <p><strong>Η μέτρηση επισκέψεων δεν έχει ενεργοποιηθεί ακόμη.</strong> Χρειάζεται μια ρύθμιση στο Cloudflare, μία φορά:</p>
+      <ol>
+        <li>Άνοιξε <strong>Storage &amp; databases → D1 SQL database</strong>, πάτα <strong>Create Database</strong>, γράψε το όνομα <code>balloona-stats</code> και πάτα <strong>Create</strong>.</li>
+        <li>Άνοιξε <strong>Workers &amp; Pages</strong>, διάλεξε τον server του admin και πήγαινε στην καρτέλα <strong>Bindings</strong>. Πάτα <strong>Add binding → D1 database</strong>.</li>
+        <li>Στο <strong>Variable name</strong> γράψε <code>STATS</code>, διάλεξε τη βάση <code>balloona-stats</code> και πάτα <strong>Add binding</strong>.</li>
+      </ol>
+      <p class="muted small">Μετά ξαναφόρτωσε αυτή τη σελίδα. Οι επισκέψεις μετράνε από τη στιγμή που θα γίνει η ρύθμιση.</p>
+    </div>`;
+  }
+
+  // 3 months are shown per week, shorter periods per day
+  function statsBuckets(data) {
+    if (data.period <= 31) return data.days.map((d) => ({ from: d.day, to: d.day, visits: d.visits, views: d.views }));
+    const out = [];
+    for (let end = data.days.length; end > 0; end -= 7) {
+      const part = data.days.slice(Math.max(0, end - 7), end);
+      out.unshift({ from: part[0].day, to: part[part.length - 1].day, visits: part.reduce((a, d) => a + d.visits, 0), views: part.reduce((a, d) => a + d.views, 0) });
+    }
+    return out;
+  }
+
+  function bucketName(b, long) {
+    if (b.from === b.to) return fmtDay(b.from, long ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric" });
+    const a = dayDate(b.from), z = dayDate(b.to);
+    const start = a.getUTCMonth() === z.getUTCMonth() ? String(a.getUTCDate()) : fmtDay(b.from, { day: "numeric", month: "short" });
+    return `${start}–${fmtDay(b.to, { day: "numeric", month: "short" })}`;
+  }
+
+  function niceTicks(max) {
+    if (max <= 0) return [0, 1];
+    const raw = max / 3;
+    const pow = 10 ** Math.floor(Math.log10(raw));
+    const step = [1, 2, 5, 10].map((m) => m * pow).find((s) => s >= raw && s >= 1) || Math.ceil(raw);
+    const ticks = [];
+    for (let v = 0; v < max + step; v += step) ticks.push(v);
+    return ticks;
+  }
+
+  function delta(cur, prev, period) {
+    if (!prev) return "";
+    const pct = Math.round(((cur - prev) / prev) * 100);
+    const what = period > 31 ? "τους προηγούμενους 3 μήνες" : `τις προηγούμενες ${period} ημέρες`;
+    if (pct === 0) return `<span class="sub">Ίδιες με ${what}</span>`;
+    const up = pct > 0;
+    return `<span class="sub"><span class="delta ${up ? "up" : "down"}">${up ? "▲" : "▼"} ${Math.abs(pct)}%</span> σε σχέση με ${what}</span>`;
+  }
+
+  function statList(title, measure, rows, nameOf) {
+    if (!rows.length) return "";
+    const max = Math.max(...rows.map((r) => r.n));
+    const total = rows.reduce((a, r) => a + r.n, 0);
+    return `<section class="stat-list"><h3>${title} <small>${measure}</small></h3><ul>${rows.map((r) => `
+      <li><span class="lbl">${nameOf(r)}</span><span class="track" aria-hidden="true"><span class="fill" style="width:${((r.n / max) * 100).toFixed(1)}%"></span></span><span class="num">${nf(r.n)} <small>${r.n / total < 0.01 ? "<1" : Math.round((r.n / total) * 100)}%</small></span></li>`).join("")}
+    </ul></section>`;
+  }
+
+  function statsHtml(data) {
+    const today = data.days[data.days.length - 1] || { visits: 0, views: 0 };
+    const tiles = `<div class="tiles">
+      <div class="tile"><span class="lbl">Επισκέψεις</span><span class="val">${nf(data.totals.visits)}</span>${delta(data.totals.visits, data.previous.visits, data.period)}</div>
+      <div class="tile"><span class="lbl">Προβολές σελίδων</span><span class="val">${nf(data.totals.views)}</span>${delta(data.totals.views, data.previous.views, data.period)}</div>
+      <div class="tile"><span class="lbl">Σήμερα</span><span class="val">${nf(today.visits)}</span><span class="sub">${today.visits === 1 ? "επίσκεψη" : "επισκέψεις"} · ${nf(today.views)} ${today.views === 1 ? "προβολή" : "προβολές"}</span></div>
+    </div>`;
+    const since = data.since && data.since > data.days[0].day ? `<p class="muted small">Η μέτρηση ξεκίνησε στις ${esc(fmtDay(data.since, { day: "numeric", month: "long", year: "numeric" }))}.</p>` : "";
+    if (!data.totals.views) {
+      return tiles + since + `<p class="muted stats-empty">Δεν υπάρχουν ακόμη επισκέψεις σε αυτή την περίοδο. Μόλις κάποιος ανοίξει το site, θα φανεί εδώ μέσα σε λίγα δευτερόλεπτα.</p>`;
+    }
+    const buckets = statsBuckets(data);
+    const ticks = niceTicks(Math.max(...buckets.map((b) => b.visits)));
+    const top = ticks[ticks.length - 1];
+    const n = buckets.length;
+    const perWeek = data.period > 31;
+    const every = n <= 7 ? 1 : perWeek ? 3 : 5;
+    // Every other label is left out on phones (class "minor")
+    const labels = buckets.map((b, i) => ((n - 1 - i) % every === 0 ? i : -1)).filter((i) => i >= 0);
+    const minor = (i) => n > 7 && ((n - 1 - i) / every) % 2 === 1;
+    const chart = `<figure class="chart" id="chart">
+      <figcaption>Επισκέψεις ${perWeek ? "ανά εβδομάδα" : "ανά ημέρα"}</figcaption>
+      <div class="plot">
+        ${ticks.map((v) => `<div class="gl" style="bottom:${(v / top) * 100}%"><span>${nf(v)}</span></div>`).join("")}
+        <div class="cols" id="chart-cols" style="--n:${n}" tabindex="0" role="img" aria-label="Γράφημα: επισκέψεις ${perWeek ? "ανά εβδομάδα" : "ανά ημέρα"}. Με τα βελάκια βλέπεις κάθε ${perWeek ? "εβδομάδα" : "ημέρα"}.">
+          ${buckets.map((b, i) => `<div class="col" data-i="${i}"><div class="cbar" style="height:${(b.visits / top) * 100}%"></div></div>`).join("")}
+        </div>
+        <div class="tip" id="chart-tip" hidden></div>
+      </div>
+      <div class="xl">${labels.map((i) => {
+        const c = ((i + 0.5) / n) * 100;
+        const align = c < 8 ? "start" : c > 92 ? "end" : "mid";
+        const b = buckets[i];
+        const text = b.from === b.to ? bucketName(b, false) : fmtDay(b.from, { day: "numeric", month: "short" });
+        return `<span class="${align}${minor(i) ? " minor" : ""}" style="left:${c}%">${esc(text)}</span>`;
+      }).join("")}</div>
+    </figure>
+    <details class="table-view"><summary>Τα νούμερα ${perWeek ? "ανά εβδομάδα" : "ανά ημέρα"}</summary>
+      <table><thead><tr><th>${perWeek ? "Εβδομάδα" : "Ημέρα"}</th><th>Επισκέψεις</th><th>Προβολές</th></tr></thead><tbody>
+      ${buckets.slice().reverse().map((b) => `<tr><td>${esc(bucketName(b, true))}</td><td>${nf(b.visits)}</td><td>${nf(b.views)}</td></tr>`).join("")}
+      </tbody></table>
+    </details>`;
+    const pages = data.pages.slice(0, 8);
+    const lists = `<div class="stat-lists">
+      ${statList("Σελίδες", "προβολές", pages, (r) => `${esc(PAGE_NAMES[r.ref] || r.ref)} <span class="lt">${LANG_TAGS[r.lang] || esc(r.lang)}</span>`)}
+      ${statList("Από πού ήρθαν", "επισκέψεις", data.sources, (r) => esc(SOURCE_NAMES[r.k] ?? r.k))}
+      ${statList("Χώρα", "επισκέψεις", data.countries, (r) => esc(countryName(r.k)))}
+      ${statList("Συσκευή", "επισκέψεις", data.devices, (r) => esc(DEVICE_NAMES[r.k] || r.k))}
+      ${statList("Γλώσσα σελίδας", "προβολές", data.langs, (r) => esc(LANG_NAMES[r.k] || r.k))}
+    </div>`;
+    return tiles + since + chart + lists;
+  }
+
+  // Tooltip on hover, tap or arrow keys
+  function wireChart(data) {
+    const cols = $("chart-cols");
+    if (!cols) return;
+    const buckets = statsBuckets(data);
+    const tip = $("chart-tip");
+    let current = -1;
+    const showAt = (i) => {
+      if (i < 0 || i >= buckets.length) return;
+      current = i;
+      const b = buckets[i];
+      cols.querySelectorAll(".col").forEach((c) => c.classList.toggle("on", Number(c.dataset.i) === i));
+      tip.innerHTML = `<strong>${esc(bucketName(b, true))}</strong><br>${nf(b.visits)} ${b.visits === 1 ? "επίσκεψη" : "επισκέψεις"} · ${nf(b.views)} ${b.views === 1 ? "προβολή" : "προβολές"}`;
+      tip.hidden = false;
+      const col = cols.children[i];
+      const bar = col.firstElementChild;
+      const plot = cols.parentElement;
+      const x = col.offsetLeft + col.offsetWidth / 2;
+      const half = tip.offsetWidth / 2;
+      tip.style.left = Math.min(Math.max(x, half), plot.offsetWidth - half) + "px";
+      tip.style.top = Math.max(0, plot.offsetHeight - bar.offsetHeight - 8) + "px";
+    };
+    const hide = () => { current = -1; tip.hidden = true; cols.querySelectorAll(".col.on").forEach((c) => c.classList.remove("on")); };
+    const indexAt = (e) => {
+      const r = cols.getBoundingClientRect();
+      return Math.min(buckets.length - 1, Math.max(0, Math.floor(((e.clientX - r.left) / r.width) * buckets.length)));
+    };
+    cols.addEventListener("pointermove", (e) => showAt(indexAt(e)));
+    cols.addEventListener("pointerdown", (e) => showAt(indexAt(e)));
+    cols.addEventListener("pointerleave", (e) => { if (e.pointerType === "mouse") hide(); });
+    cols.addEventListener("focus", () => showAt(current >= 0 ? current : buckets.length - 1));
+    cols.addEventListener("blur", hide);
+    cols.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault();
+        showAt(Math.min(buckets.length - 1, Math.max(0, (current < 0 ? buckets.length - 1 : current) + (e.key === "ArrowLeft" ? -1 : 1))));
+      } else if (e.key === "Escape") hide();
+    });
+  }
+
   /* ---------- Tabs ---------- */
   document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((t) => {
@@ -688,6 +883,7 @@
     });
     $("list").querySelectorAll("textarea").forEach(grow);
     renderCategories();
+    if (tab.dataset.tab === "stats") loadStats();
   }));
 
   /* ---------- Login ---------- */

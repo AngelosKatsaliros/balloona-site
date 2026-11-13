@@ -28,8 +28,18 @@ Put the worker address in [`admin/config.js`](../admin/config.js):
 window.BALLOONA_ADMIN_API = "https://balloona-admin.yourname.workers.dev";
 ```
 
-Then open `https://angeloskatsaliros.github.io/balloona-site/admin/`, log in with the password, and give the
+Then open `https://www.balloona.gr/admin/`, log in with the password, and give the
 editor the address and the password.
+
+## 4. Visit counter for the «Επισκέψεις» tab (optional)
+1. In Cloudflare open **Storage & databases** → **D1 SQL database** → **Create Database**, name it
+   `balloona-stats`, and click **Create**.
+2. Open **Workers & Pages** → the `balloona-admin` worker → **Bindings** → **Add binding** → **D1 database**.
+3. **Variable name:** `STATS`, choose `balloona-stats`, and click **Add binding**.
+
+The worker creates its tables by itself. The site sends one small request per page view to
+`stats_url` in `_config.yml` (the worker's `/hit`); no cookies are used. Visits from a device that is
+logged in to /admin are not counted.
 
 ## Later
 - **Updating the server code:** when `admin-server/worker.js` changes, open the worker in Cloudflare →

@@ -37,7 +37,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@300;400;500;600&family=Great+Vibes&family=Noto+Serif+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{{ '/css/styles.css' | relative_url }}">
 </head>
-<body>
+<body data-ref="{{ page.ref }}"{% if site.stats_url %} data-stats="{{ site.stats_url }}"{% endif %}>
 <header class="site-header">
   <div class="container header-inner">
     <a class="brand" href="{% include url.html to="home" %}" aria-label="{{ t.home_label }}">

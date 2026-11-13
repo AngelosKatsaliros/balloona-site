@@ -13,6 +13,12 @@
  *   GITHUB_REPO      owner/name of the repository
  *   GITHUB_BRANCH    branch the site is published from
  *   ALLOWED_ORIGINS  comma-separated site origins allowed to call this server
+ *
+ * Optional binding (Worker → Bindings → Add binding → D1 database):
+ *   STATS            a D1 database for the visit counter shown in the admin's
+ *                    «Επισκέψεις» tab. The tables are created automatically.
+ *                    No cookies; a visitor is recognised only within one day,
+ *                    by a hash with a salt that is replaced every day.
  */
 
 const DEFAULTS = {
@@ -50,6 +56,14 @@ const LANGS = { en: { title: "αγγλικός", name: "αγγλικό", text: "
 // A creation can link to a post about it (the «Δείτε το βίντεο» button); keep in sync with js/main.js
 const SOCIAL_HOSTS = ["instagram.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com"];
 const SESSION_DAYS = 30;
+// Visit counter (needs the STATS binding); keep page keys in sync with _data/pages.yml
+const STATS_PAGES = ["home", "creations", "decorations", "about", "contact"];
+const STATS_LANGS = ["el", "en", "de"];
+const STATS_DEVICES = ["mobile", "tablet", "desktop"];
+const STATS_PERIODS = [7, 30, 90];
+const STATS_KEEP_DAYS = 400;
+const STATS_TZ = "Europe/Athens";
+const BOT_UA = /bot|crawl|spider|slurp|headless|lighthouse|pagespeed|preview|facebookexternalhit|whatsapp|telegram|python|curl|wget|java\/|httpclient|phantom|selenium|puppeteer|playwright/i;
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -85,6 +99,7 @@ export default {
 
       if (route === "GET /") result = { ok: true, service: "balloona-admin" };
       else if (route === "POST /login") result = await login(request, env);
+      else if (route === "POST /hit") result = await recordHit(request, env);
       else {
         await requireSession(request, env);
         if (route === "GET /content") result = await getContent(gh, cfg);
@@ -95,6 +110,7 @@ export default {
         else if (route === "PUT /gallery") result = await saveGallery(request, gh);
         else if (route === "PUT /categories") result = await saveCategories(request, gh);
         else if (route === "POST /home/photo") result = await replaceHomePhoto(request, gh);
+        else if (route === "GET /stats") result = await getStats(url, env);
         else throw new HttpError(404, "Δεν βρέθηκε.");
       }
       return json(result, 200, cors);
@@ -106,6 +122,144 @@ export default {
     }
   },
 };
+
+/* ---------------- Visit counter ---------------- */
+
+// One page view, sent by js/main.js on the public site (no login, no cookies)
+async function recordHit(request, env) {
+  const db = env.STATS;
+  if (!db) return { ok: false }; // counting is not switched on yet
+  const text = await request.text();
+  if (text.length > 1000) throw new HttpError(400, "Λάθος δεδομένα.");
+  let body;
+  try { body = JSON.parse(text); } catch { throw new HttpError(400, "Λάθος δεδομένα."); }
+  const ua = request.headers.get("User-Agent") || "";
+  if (!body || !STATS_PAGES.includes(body.ref) || !STATS_LANGS.includes(body.lang) || BOT_UA.test(ua) || !ua) return { ok: true };
+  const device = STATS_DEVICES.includes(body.dev) ? body.dev : "desktop";
+  const src = sourceOf(body.r, body.u, ua);
+  const country = /^[A-Z]{2}$/.test((request.cf && request.cf.country) || "") ? request.cf.country : "";
+  const day = statsDay(new Date());
+
+  await ensureStatsTables(db);
+  // Recognise the same visitor within the day only: the salt changes daily and old ones are deleted
+  const salt = await dailySalt(db, day);
+  const ip = request.headers.get("CF-Connecting-IP") || "";
+  const visitor = (await sha256Hex(`${salt}|${ip}|${ua}`)).slice(0, 24);
+  const seen = await db.prepare("INSERT OR IGNORE INTO seen (day, h) VALUES (?, ?)").bind(day, visitor).run();
+  const isNew = seen.meta && seen.meta.changes > 0 ? 1 : 0;
+  await db.prepare("INSERT INTO hits (day, ref, lang, src, country, device, new) VALUES (?, ?, ?, ?, ?, ?, ?)")
+    .bind(day, body.ref, body.lang, src, country, device, isNew).run();
+  if (isNew && Math.random() < 0.05) {
+    const yesterday = addDays(day, -1);
+    await db.batch([
+      db.prepare("DELETE FROM seen WHERE day < ?").bind(yesterday),
+      db.prepare("DELETE FROM salt WHERE day < ?").bind(yesterday),
+      db.prepare("DELETE FROM hits WHERE day < ?").bind(addDays(day, -STATS_KEEP_DAYS)),
+    ]);
+  }
+  return { ok: true };
+}
+
+async function getStats(url, env) {
+  const db = env.STATS;
+  if (!db) return { ready: false };
+  const period = STATS_PERIODS.includes(Number(url.searchParams.get("days"))) ? Number(url.searchParams.get("days")) : 30;
+  const today = statsDay(new Date());
+  const from = addDays(today, -(period - 1));
+  const prevFrom = addDays(from, -period);
+  const prevTo = addDays(from, -1);
+  await ensureStatsTables(db);
+  const q = (sql, ...args) => db.prepare(sql).bind(...args);
+  const top = (col, measure) => q(`SELECT ${col} AS k, ${measure} AS n FROM hits WHERE day >= ? AND day <= ? GROUP BY ${col} HAVING n > 0 ORDER BY n DESC, k LIMIT 12`, from, today);
+  const [daily, prev, pages, sources, countries, devices, langs, first] = await db.batch([
+    q("SELECT day, COUNT(*) AS views, SUM(new) AS visits FROM hits WHERE day >= ? AND day <= ? GROUP BY day", from, today),
+    q("SELECT COUNT(*) AS views, COALESCE(SUM(new), 0) AS visits FROM hits WHERE day >= ? AND day <= ?", prevFrom, prevTo),
+    q("SELECT ref, lang, COUNT(*) AS n FROM hits WHERE day >= ? AND day <= ? GROUP BY ref, lang ORDER BY n DESC, ref, lang", from, today),
+    top("src", "SUM(new)"),
+    top("country", "SUM(new)"),
+    top("device", "SUM(new)"),
+    top("lang", "COUNT(*)"),
+    q("SELECT MIN(day) AS day FROM hits"),
+  ]);
+  const byDay = new Map((daily.results || []).map((r) => [r.day, r]));
+  const days = [];
+  for (let d = from; d <= today; d = addDays(d, 1)) {
+    const r = byDay.get(d);
+    days.push({ day: d, views: r ? Number(r.views) : 0, visits: r ? Number(r.visits) : 0 });
+  }
+  const sum = (k) => days.reduce((a, r) => a + r[k], 0);
+  const list = (res) => (res.results || []).map((r) => ({ k: r.k, n: Number(r.n) }));
+  const p = (prev.results || [])[0] || {};
+  return {
+    ready: true,
+    period,
+    today,
+    since: ((first.results || [])[0] || {}).day || null,
+    days,
+    totals: { views: sum("views"), visits: sum("visits") },
+    previous: { views: Number(p.views) || 0, visits: Number(p.visits) || 0 },
+    pages: (pages.results || []).map((r) => ({ ref: r.ref, lang: r.lang, n: Number(r.n) })),
+    sources: list(sources),
+    countries: list(countries),
+    devices: list(devices),
+    langs: list(langs),
+  };
+}
+
+let statsTablesReady = false;
+async function ensureStatsTables(db) {
+  if (statsTablesReady) return;
+  await db.batch([
+    db.prepare("CREATE TABLE IF NOT EXISTS hits (day TEXT NOT NULL, ref TEXT NOT NULL, lang TEXT NOT NULL, src TEXT NOT NULL, country TEXT NOT NULL, device TEXT NOT NULL, new INTEGER NOT NULL)"),
+    db.prepare("CREATE INDEX IF NOT EXISTS hits_day ON hits (day)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS seen (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY KEY (day, h))"),
+    db.prepare("CREATE TABLE IF NOT EXISTS salt (day TEXT PRIMARY KEY, v TEXT NOT NULL)"),
+  ]);
+  statsTablesReady = true;
+}
+
+async function dailySalt(db, day) {
+  const fresh = b64urlEncode(crypto.getRandomValues(new Uint8Array(18)));
+  await db.prepare("INSERT OR IGNORE INTO salt (day, v) VALUES (?, ?)").bind(day, fresh).run();
+  return (await db.prepare("SELECT v FROM salt WHERE day = ?").bind(day).first("v")) || fresh;
+}
+
+// Where a visit came from: a ?utm_source= / ?ref= tag, the referring site, or the in-app browser
+const SOURCE_TAGS = { ig: "instagram", insta: "instagram", instagram: "instagram", fb: "facebook", facebook: "facebook", tt: "tiktok", tiktok: "tiktok", google: "google" };
+function sourceOf(refHost, tag, ua) {
+  const t = String(tag || "").toLowerCase().replace(/[^a-z0-9_.-]/g, "").slice(0, 30);
+  if (t) return SOURCE_TAGS[t] || t;
+  let h = String(refHost || "").toLowerCase();
+  if (h && /^[a-z0-9.-]{1,100}$/.test(h)) {
+    h = h.replace(/^(www|m|l|lm|mobile|out)\./, "");
+    if (/(^|\.)google(\.[a-z]{2,3}){1,2}$/.test(h) || /(^|\.)googleusercontent\.com$/.test(h)) return "google";
+    if (/(^|\.)instagram\.com$/.test(h)) return "instagram";
+    if (/(^|\.)tiktok\.com$/.test(h)) return "tiktok";
+    if (/(^|\.)(facebook|fb|messenger)\.com$/.test(h)) return "facebook";
+    if (/(^|\.)bing\.com$/.test(h)) return "bing";
+    if (!/(^|\.)balloona\.gr$|\.github\.io$/.test(h)) return h.slice(0, 60);
+  }
+  if (/Instagram/.test(ua)) return "instagram";
+  if (/FBAN|FBAV|FB_IAB/.test(ua)) return "facebook";
+  if (/musical_ly|TikTok|BytedanceWebview|trill_/i.test(ua)) return "tiktok";
+  return "";
+}
+
+// Dates are counted in Greek time
+function statsDay(date) {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: STATS_TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+
+function addDays(day, n) {
+  const d = new Date(day + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
 
 /* ---------------- Routes ---------------- */
 

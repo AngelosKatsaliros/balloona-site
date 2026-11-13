@@ -4,6 +4,8 @@ url: "https://www.balloona.gr"
 baseurl: ""
 # Address search engines should use for the pages (the final domain)
 canonical_url: "https://www.balloona.gr"
+# Visit counter shown in the admin's «Επισκέψεις» tab (the admin server, admin-server/worker.js)
+stats_url: "https://balloona-admin.balloona-pop.workers.dev/hit"
 exclude:
   - README.md
   - .pages.yml
