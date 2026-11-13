@@ -1,6 +1,9 @@
 # Texts shared by several pages, in each language (el, en, de)
 el:
   locale: el_GR
+  place:
+    city: Αιγάλεω
+    region: Αττική
   home_label: "Balloona – Αρχική"
   menu: Μενού
   main_menu: Κύριο μενού
@@ -43,8 +46,15 @@ el:
     subject: Νέο αίτημα από το site Balloona
     find_us: Βρείτε μας
     find_us_text: Δείτε τις τελευταίες μας δημιουργίες και στείλτε μας μήνυμα στα social media.
+    delivery_title: "Παραλαβή & παράδοση 🎈"
+    delivery:
+      - "Η Balloona βρίσκεται στο Αιγάλεω. Οι δημιουργίες μας παραλαμβάνονται κατόπιν συνεννόησης, ενώ παρέχουμε παράδοση σε όλη την Αττική."
+      - "Αναλαμβάνουμε στολισμούς σε όλη την Αττική, κατόπιν συνεννόησης. Για τη διαθεσιμότητα και το κόστος μεταφοράς, στείλτε μας το αίτημά σας."
 en:
   locale: en_GB
+  place:
+    city: Aigaleo
+    region: Attica
   home_label: "Balloona – Home"
   menu: Menu
   main_menu: Main menu
@@ -88,8 +98,15 @@ en:
     reply_lang: English (απάντηση στα αγγλικά)
     find_us: Find us
     find_us_text: See our latest creations and send us a message on social media.
+    delivery_title: "Pick-up & delivery 🎈"
+    delivery:
+      - "Balloona is based in Aigaleo, Athens. Our creations can be picked up by arrangement, and we deliver across Attica."
+      - "We take on decorations anywhere in Attica, by arrangement. For availability and delivery costs, send us your request."
 de:
   locale: de_DE
+  place:
+    city: Aigaleo
+    region: Attika
   home_label: "Balloona – Startseite"
   menu: Menü
   main_menu: Hauptmenü
@@ -133,3 +150,7 @@ de:
     reply_lang: Deutsch (απάντηση στα γερμανικά)
     find_us: Hier finden Sie uns
     find_us_text: Sehen Sie sich unsere neuesten Kreationen an und schreiben Sie uns in den sozialen Medien.
+    delivery_title: "Abholung & Lieferung 🎈"
+    delivery:
+      - "Balloona befindet sich in Aigaleo (Athen). Unsere Kreationen können nach Absprache abgeholt werden, und wir liefern in ganz Attika."
+      - "Dekorationen übernehmen wir nach Absprache in ganz Attika. Für Verfügbarkeit und Lieferkosten senden Sie uns Ihre Anfrage."

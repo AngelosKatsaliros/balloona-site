@@ -355,6 +355,9 @@ body.lb-open { overflow: hidden; }
 .contact-info a { color: var(--burgundy); font-weight: 500; text-decoration: none; display: inline-flex; gap: 8px; align-items: center; }
 .contact-info a:hover { color: var(--rose); }
 .contact-info svg { width: 20px; height: 20px; }
+.contact-side { display: grid; gap: 20px; }
+.contact-delivery p { margin: 0 0 12px; }
+.contact-delivery p:last-child { margin-bottom: 0; }
 
 .visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
