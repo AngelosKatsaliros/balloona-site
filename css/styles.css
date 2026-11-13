@@ -148,6 +148,40 @@ section { padding: 64px 0; }
 .signature .name { font-size: 40px; transform: rotate(-4deg); display: inline-block; padding-bottom: 6px; border-bottom: 1px solid var(--gold); }
 .signature .heart { color: var(--gold); font-family: var(--sans); font-size: 24px; margin-left: 6px; }
 
+/* ---------- FAQ (Συχνές ερωτήσεις) ---------- */
+.faq-section { padding-top: 8px; }
+.faq { max-width: 860px; margin-inline: auto; display: grid; gap: 12px; }
+.faq-item { background: var(--white); border: 1px solid var(--blush-2); border-radius: var(--radius); transition: box-shadow .25s, border-color .25s; }
+.faq-item[open] { border-color: var(--gold); box-shadow: var(--shadow); }
+.faq-item summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 18px 22px; font-family: var(--serif); font-size: 20px; line-height: 1.3; color: var(--burgundy);
+  border-radius: var(--radius);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary:hover .faq-q { color: var(--rose-dark); }
+.faq-item summary:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+.faq-icon { flex: none; position: relative; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gold); color: var(--gold); transition: background .25s, color .25s; }
+.faq-icon::before, .faq-icon::after { content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 1.5px; margin: -0.75px 0 0 -6px; background: currentColor; border-radius: 1px; transition: transform .25s; }
+.faq-icon::after { transform: rotate(90deg); }
+.faq-item[open] .faq-icon { background: var(--gold); color: var(--white); }
+.faq-item[open] .faq-icon::after { transform: rotate(0deg); }
+.faq-a { padding: 0 22px 20px; color: var(--text); }
+.faq-a p { margin: 0 0 12px; max-width: 70ch; }
+.faq-a p:last-child { margin-bottom: 0; }
+.faq-a a { color: var(--burgundy); font-weight: 500; text-decoration-color: var(--gold); text-underline-offset: 3px; }
+.faq-a a:hover { color: var(--rose); }
+/* Smooth opening where the browser supports it; elsewhere the answer simply appears */
+@supports (interpolate-size: allow-keywords) {
+  .faq { interpolate-size: allow-keywords; }
+  .faq-item::details-content { block-size: 0; overflow: hidden; transition: block-size .3s ease, content-visibility .3s allow-discrete; }
+  .faq-item[open]::details-content { block-size: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .faq-item, .faq-icon, .faq-icon::before, .faq-icon::after { transition: none; }
+  .faq-item::details-content { transition: none; }
+}
+
 /* ---------- CTA ---------- */
 .cta {
   background: linear-gradient(90deg, #f6dcd9, #f3d3d0 60%, #f6dcd9);
@@ -421,6 +455,8 @@ body.lb-open { overflow: hidden; }
   .hero-media { height: 300px; }
   .cta { padding: 26px 20px; }
   .form, .contact-info { padding: 22px; }
+  .faq-item summary { font-size: 18px; padding: 16px 16px 16px 18px; gap: 14px; }
+  .faq-a { padding: 0 18px 18px; }
 }
 
 /* Small phones: the Instagram/TikTok buttons move into the menu so the language switch fits */

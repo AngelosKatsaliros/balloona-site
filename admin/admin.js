@@ -21,6 +21,8 @@
   const VIDEO_EXTS = ["mp4", "mov", "webm", "m4v"];
   const MAX_DESCRIPTION = 1500; // keep in sync with admin-server/worker.js
   const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin-server/worker.js
+  const MAX_FAQ = 30; // keep in sync with admin-server/worker.js
+  const MAX_QUESTION = 200; // keep in sync with admin-server/worker.js
   const OLD_SERVER = ": ο server χρειάζεται ενημέρωση. Ενημέρωσε τον διαχειριστή του site.";
   const SOCIAL_HOSTS = ["instagram.com", "tiktok.com", "vm.tiktok.com", "vt.tiktok.com"]; // keep in sync with admin-server/worker.js
   const SOCIAL_HELP = "Ο σύνδεσμος πρέπει να είναι ανάρτηση από TikTok ή Instagram (π.χ. https://www.tiktok.com/@balloona.pop/video/…).";
@@ -34,10 +36,11 @@
 
   const API = (window.BALLOONA_ADMIN_API || "").replace(/\/+$/, "");
   let token = store.get(TOKEN_KEY);
-  let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "", categories: [], savedCategories: [], categoriesVersion: "" };
+  let state = { gallery: [], saved: "", savedData: "[]", home: {}, version: "", rawBase: "", categories: [], savedCategories: [], categoriesVersion: "", faq: [], savedFaq: [], faqVersion: "", faqOld: false };
   let addImage = null; // data URL of the resized photo to add
   let addVideo = null; // { file, ext, poster } of the video to add
   const enOpen = new WeakSet(); // creations whose «Μεταφράσεις» box is open, kept open across redraws
+  const faqOpen = new WeakSet(); // the same for the questions
   // Optional translations (title_en, description_de, name_de, …); keep in sync with admin-server/worker.js
   const LANGS = [{ code: "en", tag: "EN", in: "στα αγγλικά" }, { code: "de", tag: "DE", in: "στα γερμανικά" }];
   const TR_FIELDS = LANGS.flatMap((l) => ["title_" + l.code, "description_" + l.code]);
@@ -101,12 +104,20 @@
   }
 
   /* ---------- Load ---------- */
-  async function load({ keepCategories = false } = {}) {
+  async function load({ keepCategories = false, keepFaq = false } = {}) {
     const data = await api("GET", "/content");
     if (!keepCategories) {
       state.savedCategories = data.categories || DEFAULT_CATEGORIES;
       state.categories = state.savedCategories.map((c) => ({ ...c }));
       state.categoriesVersion = data.categoriesVersion || "";
+    }
+    if (!keepFaq) {
+      state.faqOld = !Array.isArray(data.faq); // a server from before the questions
+      state.savedFaq = data.faq || [];
+      const wasOpen = state.faq.map((f) => faqOpen.has(f)); // keep the «Μεταφράσεις» boxes open after saving
+      state.faq = state.savedFaq.map((f) => ({ ...f }));
+      state.faq.forEach((f, i) => { if (wasOpen[i]) faqOpen.add(f); });
+      state.faqVersion = data.faqVersion || "";
     }
     state.savedData = JSON.stringify(data.gallery);
     state.gallery = JSON.parse(state.savedData);
@@ -118,6 +129,7 @@
     renderGallery();
     renderCategories();
     renderHome();
+    renderFaq();
   }
 
   // Compare lists by content only (key order and empty fields do not count as changes)
@@ -135,8 +147,17 @@
     return strip(state.categories) !== strip(state.savedCategories);
   }
 
+  const FAQ_FIELDS = ["question", "answer", ...LANGS.flatMap((l) => ["question_" + l.code, "answer_" + l.code])];
+  function faqCanon(list) {
+    return JSON.stringify(list.map((f) => FAQ_FIELDS.map((k) => trim(f[k]))));
+  }
+
+  function faqDirty() {
+    return faqCanon(state.faq) !== faqCanon(state.savedFaq);
+  }
+
   function dirty() {
-    return galleryDirty() || catsDirty();
+    return galleryDirty() || catsDirty() || faqDirty();
   }
 
   /* A creation's photos/videos: the cover (image/video fields of the item) first, then "more" */
@@ -310,10 +331,16 @@
     const names = state.categories.map((c) => c.name.trim().toLocaleLowerCase("el"));
     if (names.some((n) => !n)) return toast("Κάθε κατηγορία χρειάζεται όνομα.", true);
     if (new Set(names).size !== names.length) return toast("Δύο κατηγορίες έχουν το ίδιο όνομα.", true);
+    const noText = state.faq.findIndex((f) => !trim(f.question) || !trim(f.answer));
+    if (noText >= 0) {
+      showTab("faq");
+      const what = trim(state.faq[noText].question) ? "δεν έχει απάντηση. Γράψε την απάντηση" : "είναι κενή. Γράψε την ερώτηση";
+      return toast(`Η ερώτηση ${noText + 1} ${what} ή σβήσε την ερώτηση με το 🗑.`, true);
+    }
     const btn = $("save");
     btn.disabled = true;
     btn.textContent = "Αποθήκευση…";
-    let gallerySaved = false;
+    let gallerySaved = false, catsSaved = false;
     try {
       // Creations first: a category can only be deleted once nothing in it is left
       let lost = "";
@@ -330,13 +357,21 @@
         });
         const names = (list) => list.reduce((n, c) => n + LANGS.filter((l) => trim(c["name_" + l.code])).length, 0);
         if (!lost && names(res.categories || []) < names(state.categories)) lost = "Οι μεταφράσεις των κατηγοριών";
+        catsSaved = true;
+      }
+      if (faqDirty()) {
+        await api("PUT", "/faq", {
+          faq: state.faq.map((f) => Object.fromEntries(FAQ_FIELDS.map((k) => [k, trim(f[k])]))),
+          version: state.faqVersion,
+        });
       }
       await load();
       if (lost) toast(lost + " δεν αποθηκεύτηκαν" + OLD_SERVER, true);
       else toast("Αποθηκεύτηκε! Το site θα ενημερωθεί σε 1–2 λεπτά.");
     } catch (err) {
       toast(err.message, true);
-      if (gallerySaved) { try { await load({ keepCategories: true }); } catch {} }
+      // Keep what was not saved yet, so a second «Αποθήκευση» can send it again
+      if (gallerySaved || catsSaved) { try { await load({ keepCategories: !catsSaved, keepFaq: true }); } catch {} }
     } finally {
       btn.disabled = false;
       btn.textContent = "Αποθήκευση";
@@ -346,8 +381,10 @@
   $("discard").addEventListener("click", () => {
     state.gallery = JSON.parse(state.savedData);
     state.categories = state.savedCategories.map((c) => ({ ...c }));
+    state.faq = state.savedFaq.map((f) => ({ ...f }));
     renderGallery();
     renderCategories();
+    renderFaq();
   });
 
   /* ---------- Categories ---------- */
@@ -622,6 +659,102 @@
     });
   }
 
+  /* ---------- Συχνές ερωτήσεις ---------- */
+  // The languages a question is translated to, e.g. ["EN", "DE"]
+  function faqTranslated(f) {
+    return LANGS.filter((l) => trim(f["question_" + l.code]) || trim(f["answer_" + l.code])).map((l) => l.tag);
+  }
+
+  function renderFaq() {
+    const list = $("faq-list");
+    const faq = state.faq;
+    $("faq-count").textContent = state.faqOld ? "" : faq.length === 1 ? "1 ερώτηση" : `${faq.length} ερωτήσεις`;
+    $("faq-add").hidden = state.faqOld || faq.length >= MAX_FAQ;
+    if (state.faqOld) {
+      list.innerHTML = `<li class="empty">Για να αλλάζεις τις ερωτήσεις από εδώ, χρειάζεται ενημέρωση του server. Ενημέρωσε τον διαχειριστή του site.</li>`;
+    } else if (!faq.length) {
+      list.innerHTML = `<li class="empty">Δεν υπάρχουν ερωτήσεις. Η ενότητα δεν φαίνεται στο site μέχρι να προσθέσεις μία.</li>`;
+    } else {
+      list.innerHTML = faq.map((f, i) => {
+        const tags = faqTranslated(f);
+        return `
+        <li class="faq-row" data-i="${i}">
+          <span class="faq-num" aria-hidden="true">${i + 1}</span>
+          <div class="faq-fields">
+            <textarea class="faq-q" data-ff="question" rows="1" maxlength="${MAX_QUESTION}" placeholder="Ερώτηση, π.χ. Κάνετε παράδοση;" aria-label="Ερώτηση ${i + 1}">${esc(f.question)}</textarea>
+            <textarea data-ff="answer" rows="2" maxlength="${MAX_DESCRIPTION}" placeholder="Απάντηση" aria-label="Απάντηση ${i + 1}">${esc(f.answer)}</textarea>
+            <details class="en-box" data-faq-tr${faqOpen.has(f) ? " open" : ""}>
+              <summary>Μεταφράσεις ${tags.length ? `<span class="en-done">✓ ${tags.join(", ")}</span>` : "<small>(προαιρετικό)</small>"}</summary>
+              ${LANGS.map((l) => `
+              <label class="lang-input top"><span>${l.tag}</span><textarea data-ff="question_${l.code}" rows="1" maxlength="${MAX_QUESTION}" lang="${l.code}" placeholder="Ερώτηση ${l.in}" aria-label="Ερώτηση ${i + 1} ${l.in}">${esc(f["question_" + l.code])}</textarea></label>
+              <textarea data-ff="answer_${l.code}" rows="2" maxlength="${MAX_DESCRIPTION}" lang="${l.code}" placeholder="Απάντηση ${l.in}" aria-label="Απάντηση ${i + 1} ${l.in}">${esc(f["answer_" + l.code])}</textarea>`).join("")}
+            </details>
+          </div>
+          <div class="item-actions">
+            <button class="icon-btn" data-fact="up" title="Μετακίνηση πάνω" aria-label="Μετακίνηση πάνω" ${i === 0 ? "disabled" : ""}>↑</button>
+            <button class="icon-btn" data-fact="down" title="Μετακίνηση κάτω" aria-label="Μετακίνηση κάτω" ${i === faq.length - 1 ? "disabled" : ""}>↓</button>
+            <button class="icon-btn danger" data-fact="delete" title="Διαγραφή" aria-label="Διαγραφή">🗑</button>
+          </div>
+        </li>`;
+      }).join("");
+    }
+    list.querySelectorAll("textarea").forEach(grow);
+    $("savebar").hidden = !dirty();
+  }
+
+  $("faq-list").addEventListener("input", (e) => {
+    const field = e.target.dataset.ff;
+    if (!field) return;
+    const f = state.faq[+e.target.closest(".faq-row").dataset.i];
+    f[field] = e.target.value;
+    if (e.target.tagName === "TEXTAREA") grow(e.target);
+    if (field !== "question" && field !== "answer") {
+      const tags = faqTranslated(f);
+      const box = e.target.closest("details").querySelector("summary");
+      box.innerHTML = "Μεταφράσεις " + (tags.length ? `<span class="en-done">✓ ${tags.join(", ")}</span>` : "<small>(προαιρετικό)</small>");
+    }
+    $("savebar").hidden = !dirty();
+  });
+
+  // A question is one line (it still wraps on a phone): Enter does not start a new line
+  $("faq-list").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target.matches("textarea[data-ff^='question']")) e.preventDefault();
+  });
+
+  $("faq-list").addEventListener("toggle", (e) => {
+    if (!e.target.matches || !e.target.matches("details[data-faq-tr]")) return;
+    const f = state.faq[+e.target.closest(".faq-row").dataset.i];
+    if (e.target.open) { faqOpen.add(f); e.target.querySelectorAll("textarea").forEach(grow); }
+    else faqOpen.delete(f);
+  }, true);
+
+  $("faq-list").addEventListener("click", (e) => {
+    const btn = e.target.closest("button[data-fact]");
+    if (!btn) return;
+    const i = +btn.closest(".faq-row").dataset.i;
+    const f = state.faq;
+    if (btn.dataset.fact === "up" && i > 0) [f[i - 1], f[i]] = [f[i], f[i - 1]];
+    if (btn.dataset.fact === "down" && i < f.length - 1) [f[i + 1], f[i]] = [f[i], f[i + 1]];
+    if (btn.dataset.fact === "delete") {
+      const q = trim(f[i].question);
+      if ((q || trim(f[i].answer)) && !confirm(`Να σβηστεί η ερώτηση${q ? ` «${q}»` : ""};\n\nΘα σβηστεί από το site όταν πατήσεις «Αποθήκευση».`)) return;
+      f.splice(i, 1);
+    }
+    renderFaq();
+    const again = $("faq-list").querySelector(`.faq-row[data-i="${btn.dataset.fact === "up" ? i - 1 : btn.dataset.fact === "down" ? i + 1 : -1}"] button[data-fact="${btn.dataset.fact}"]`);
+    if (again && !again.disabled) again.focus();
+  });
+
+  $("faq-add").addEventListener("click", () => {
+    if (state.faq.length >= MAX_FAQ) return toast(`Έως ${MAX_FAQ} ερωτήσεις.`, true);
+    state.faq.push({ question: "", answer: "" });
+    renderFaq();
+    const rows = $("faq-list").querySelectorAll(".faq-row");
+    const input = rows[rows.length - 1].querySelector(".faq-q");
+    input.focus();
+    input.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+
   /* ---------- Home photos ---------- */
   function renderHome() {
     $("home-grid").innerHTML = HOME_SLOTS.map((s) => `
@@ -874,17 +1007,19 @@
   }
 
   /* ---------- Tabs ---------- */
-  document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
+  function showTab(name) {
     document.querySelectorAll(".tab").forEach((t) => {
-      const on = t === tab;
+      const on = t.dataset.tab === name;
       t.classList.toggle("active", on);
       t.setAttribute("aria-selected", on);
       $("tab-" + t.dataset.tab).hidden = !on;
     });
     $("list").querySelectorAll("textarea").forEach(grow);
+    $("faq-list").querySelectorAll("textarea").forEach(grow);
     renderCategories();
-    if (tab.dataset.tab === "stats") loadStats();
-  }));
+    if (name === "stats") loadStats();
+  }
+  document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => showTab(tab.dataset.tab)));
 
   /* ---------- Login ---------- */
   $("login-form").addEventListener("submit", async (e) => {

@@ -52,6 +52,7 @@
       <button class="tab active" role="tab" data-tab="gallery" aria-selected="true">Δημιουργίες</button>
       <button class="tab" role="tab" data-tab="categories" aria-selected="false">Κατηγορίες</button>
       <button class="tab" role="tab" data-tab="home" aria-selected="false">Αρχική σελίδα</button>
+      <button class="tab" role="tab" data-tab="faq" aria-selected="false">Συχνές ερωτήσεις</button>
       <button class="tab" role="tab" data-tab="stats" aria-selected="false">Επισκέψεις</button>
     </nav>
 
@@ -136,6 +137,20 @@
           <button class="btn" type="submit">+ Προσθήκη</button>
         </form>
         <p class="muted small">Για να μπει μια δημιουργία σε νέα κατηγορία: πρόσθεσε την κατηγορία, πάτα «Αποθήκευση» και μετά διάλεξέ τη στην καρτέλα «Δημιουργίες».</p>
+      </div>
+    </div>
+
+    <div id="tab-faq" hidden>
+      <div class="card">
+        <div class="list-head">
+          <h2>Συχνές ερωτήσεις</h2>
+          <span class="muted" id="faq-count"></span>
+        </div>
+        <p class="muted small">Εμφανίζονται στο τέλος της αρχικής σελίδας, με αυτή τη σειρά. Ο επισκέπτης πατάει την ερώτηση και ανοίγει η απάντηση από κάτω. Άλλαξε τη σειρά με τα βελάκια.</p>
+        <p class="muted small">Στις «Μεταφράσεις» γράφεις, αν θέλεις, την ερώτηση και την απάντηση στα αγγλικά (EN) και στα γερμανικά (DE). Ό,τι μείνει κενό: στα γερμανικά φαίνεται το αγγλικό, κι αν λείπει κι αυτό, το ελληνικό.</p>
+        <ul class="list" id="faq-list"></ul>
+        <button class="btn ghost faq-new" type="button" id="faq-add">+ Νέα ερώτηση</button>
+        <p class="muted small">Μετά από κάθε αλλαγή πάτα «Αποθήκευση» κάτω. Μια κενή γραμμή στην απάντηση ξεκινά νέα παράγραφο.</p>
       </div>
     </div>
 

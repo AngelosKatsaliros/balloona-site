@@ -53,6 +53,11 @@ Static site (HTML + CSS + a little JS). Open `index.html` in a browser to view i
   lightbox; only tiktok.com / instagram.com links are accepted), reorder, delete, and swap
   home page photos. The «Κατηγορίες» tab adds, renames (Greek, English and German), reorders and deletes categories (ids stay fixed;
   `dora`, `genethlia`, `vaptiseis` are linked from the home page and cannot be deleted).
+- «Συχνές ερωτήσεις» at the end of the home page come from `_data/faq.json` (`question`, `answer`, optional
+  `question_en`/`answer_en`/`question_de`/`answer_de`; same English/Greek fallback as above; a blank line in an
+  answer starts a new paragraph). Each question opens its answer on click (`<details>`, no JavaScript).
+  The admin's «Συχνές ερωτήσεις» tab adds, edits, translates, reorders and deletes them; with no questions
+  the section is hidden.
 - On Δημιουργίες, clicking a card opens a lightbox: the photo can be zoomed (click/tap, mouse wheel, pinch,
   +/− buttons), thumbnails switch between its photos/videos, and the item's `description` shows beside it
   (below on phones), with a «Θέλω κάτι παρόμοιο»

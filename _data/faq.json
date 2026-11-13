@@ -1,0 +1,34 @@
+[
+  {
+    "question": "Πώς μπορώ να παραγγείλω;",
+    "answer": "Στείλε μας το αίτημά σου μέσα από τη φόρμα επικοινωνίας ή στο Instagram @balloona.pop. Πες μας την περίσταση, την ημερομηνία και τι έχεις φανταστεί, για να σχεδιάσουμε μαζί τη δημιουργία σου!",
+    "question_en": "How can I order?",
+    "answer_en": "Send us your request through the contact form or on Instagram @balloona.pop. Tell us the occasion, the date and what you have in mind, so we can design your creation together!",
+    "question_de": "Wie kann ich bestellen?",
+    "answer_de": "Senden Sie uns Ihre Anfrage über das Kontaktformular oder auf Instagram @balloona.pop. Erzählen Sie uns vom Anlass, vom Datum und von Ihren Vorstellungen, damit wir Ihre Kreation gemeinsam gestalten können!"
+  },
+  {
+    "question": "Πόσες ημέρες νωρίτερα πρέπει να επικοινωνήσω;",
+    "answer": "Όσο νωρίτερα, τόσο καλύτερα, ιδιαίτερα για στολισμούς εκδηλώσεων και περιόδους αυξημένης ζήτησης. Αν χρειάζεσαι κάτι άμεσα, επικοινώνησε μαζί μας για να ελέγξουμε τη διαθεσιμότητα.",
+    "question_en": "How many days in advance should I get in touch?",
+    "answer_en": "The sooner, the better, especially for event decorations and busy periods. If you need something at short notice, get in touch and we'll check availability.",
+    "question_de": "Wie viele Tage im Voraus sollte ich mich melden?",
+    "answer_de": "Je früher, desto besser – besonders bei Dekorationen für Veranstaltungen und in Zeiten mit hoher Nachfrage. Wenn Sie etwas kurzfristig brauchen, melden Sie sich bei uns und wir prüfen die Verfügbarkeit."
+  },
+  {
+    "question": "Μπορώ να επιλέξω χρώματα, όνομα και ευχή;",
+    "answer": "Φυσικά! Προσαρμόζουμε τη δημιουργία σου στα χρώματα και στο θέμα που αγαπάς, προσθέτοντας όνομα ή προσωπική ευχή. Οι λεπτομέρειες συμφωνούνται μαζί σου, ανάλογα με το σχέδιο και τη διαθεσιμότητα των υλικών.",
+    "question_en": "Can I choose the colours, a name and a message?",
+    "answer_en": "Of course! We tailor your creation to the colours and theme you love, adding a name or a personal message. The details are agreed with you, depending on the design and the availability of materials.",
+    "question_de": "Kann ich Farben, Namen und Wunschtext wählen?",
+    "answer_de": "Natürlich! Wir passen Ihre Kreation an Ihre Lieblingsfarben und Ihr Wunschthema an und ergänzen einen Namen oder einen persönlichen Gruß. Die Details stimmen wir mit Ihnen ab, je nach Design und Verfügbarkeit der Materialien."
+  },
+  {
+    "question": "Μπορώ να σας στείλω μια φωτογραφία ως έμπνευση;",
+    "answer": "Ναι! Στείλε μας τη φωτογραφία και πες μας ποιες λεπτομέρειες σου αρέσουν. Θα συζητήσουμε τι μπορεί να υλοποιηθεί και θα προτείνουμε μια δημιουργία με την προσωπική πινελιά της Balloona.",
+    "question_en": "Can I send you a photo for inspiration?",
+    "answer_en": "Yes! Send us the photo and tell us which details you like. We'll talk about what can be made and suggest a creation with Balloona's personal touch.",
+    "question_de": "Kann ich Ihnen ein Foto als Inspiration schicken?",
+    "answer_de": "Ja! Schicken Sie uns das Foto und sagen Sie uns, welche Details Ihnen gefallen. Wir besprechen, was sich umsetzen lässt, und schlagen Ihnen eine Kreation mit der persönlichen Note von Balloona vor."
+  }
+]

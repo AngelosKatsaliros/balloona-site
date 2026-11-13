@@ -130,6 +130,17 @@ body.uploading .madd input, body.uploading .mtools button { pointer-events: none
 .cat-add .btn { flex: none; }
 .empty { text-align: center; padding: 24px; color: var(--muted); }
 
+/* Συχνές ερωτήσεις */
+.faq-row { display: grid; grid-template-columns: 28px 1fr auto; gap: 12px; align-items: start; padding: 10px; border: 1px solid var(--blush); border-radius: 10px; background: var(--cream); }
+.faq-num { width: 28px; height: 28px; margin-top: 8px; border-radius: 50%; background: var(--blush); color: var(--burgundy); font-size: 14px; font-weight: 600; display: grid; place-items: center; }
+.faq-fields { display: grid; gap: 8px; min-width: 0; }
+.faq-fields > textarea { background: var(--white); font-size: 15px; padding: 8px 12px; overflow: hidden; }
+.faq-fields > textarea.faq-q { font-size: 16px; font-weight: 600; color: var(--burgundy); padding: 9px 12px; resize: none; }
+.faq-row .lang-input textarea { padding: 9px 12px 9px 38px; overflow: hidden; resize: none; }
+.lang-input.top span { top: 12px; transform: none; line-height: 20px; }
+.faq-row .item-actions { margin-top: 0; }
+.faq-new { margin: 14px 0 12px; }
+
 .home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 12px; }
 .slot { border: 1px solid var(--blush); border-radius: 10px; overflow: hidden; background: var(--cream); display: flex; flex-direction: column; }
 .slot img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: var(--blush); }
@@ -208,10 +219,14 @@ body.uploading .madd input, body.uploading .mtools button { pointer-events: none
   .cat-row { grid-template-columns: 1fr auto; }
   .cat-row .lang-input { grid-column: 1 / -1; }
   .cat-add { flex-direction: column; }
+  .faq-row { grid-template-columns: auto 1fr; gap: 8px; }
+  .faq-num { grid-row: 1; grid-column: 1; }
+  .faq-row .item-actions { grid-row: 1; grid-column: 2; justify-content: flex-end; }
+  .faq-fields { grid-row: 2; grid-column: 1 / -1; }
   .brand-sub { display: none; }
   .card { padding: 18px; }
   .tabs { flex-wrap: wrap; column-gap: 2px; }
-  .tab { padding: 10px 12px; white-space: nowrap; }
+  .tab { padding: 10px; white-space: nowrap; }
   .tiles { gap: 8px; }
   .tile { padding: 10px 12px; }
   .tile .val { font-size: 24px; }

@@ -1,0 +1,34 @@
+{%- comment -%}
+  «Συχνές ερωτήσεις» at the end of the home page: click a question to show its answer.
+  The questions live in _data/faq.json and are edited from the admin page.
+  Other languages use question_<lang> / answer_<lang> when filled in (e.g. answer_de);
+  otherwise the English text, otherwise the Greek one. A blank line in an answer starts a new paragraph.
+{%- endcomment -%}
+{%- if site.data.faq and site.data.faq.size > 0 -%}
+{%- assign t = site.data.i18n[page.lang] -%}
+{%- assign tr = false -%}{%- if page.lang != "el" -%}{%- assign tr = true -%}{%- endif -%}
+{%- capture qk %}question_{{ page.lang }}{% endcapture -%}
+{%- capture ak %}answer_{{ page.lang }}{% endcapture -%}
+{%- capture nn %}
+
+{% endcapture -%}
+<section class="faq-section" id="faq">
+  <div class="container">
+    <h2 class="section-title">{{ t.faq_title }}</h2>
+    <div class="faq">
+{%- for f in site.data.faq %}{% if f.question and f.question != "" %}
+{%- assign q = f.question %}{% if tr %}{% if f.question_en and f.question_en != "" %}{% assign q = f.question_en %}{% endif %}{% if f[qk] and f[qk] != "" %}{% assign q = f[qk] %}{% endif %}{% endif %}
+{%- assign a = f.answer %}{% if tr %}{% if f.answer_en and f.answer_en != "" %}{% assign a = f.answer_en %}{% endif %}{% if f[ak] and f[ak] != "" %}{% assign a = f[ak] %}{% endif %}{% endif %}
+      <details class="faq-item">
+        <summary><span class="faq-q">{{ q | strip | escape }}</span><span class="faq-icon" aria-hidden="true"></span></summary>
+        <div class="faq-a">
+{%- assign paras = a | strip | escape | split: nn %}{% for para in paras %}{% assign para = para | strip %}{% if para != "" %}
+          <p>{{ para | newline_to_br | replace: "Instagram @balloona.pop", 'Instagram <a href="https://www.instagram.com/balloona.pop/" target="_blank" rel="noopener">@balloona.pop</a>' }}</p>
+{%- endif %}{% endfor %}
+        </div>
+      </details>
+{%- endif %}{% endfor %}
+    </div>
+  </div>
+</section>
+{%- endif %}

@@ -30,6 +30,7 @@ const DEFAULTS = {
 const GALLERY_PATH = "_data/gallery.json";
 const HOME_PATH = "_data/home.json";
 const CATEGORIES_PATH = "_data/categories.json";
+const FAQ_PATH = "_data/faq.json";
 const UPLOAD_DIR = "images/uploads";
 // Used until _data/categories.json exists
 const DEFAULT_CATEGORIES = [
@@ -51,6 +52,8 @@ const MAX_TITLE = 80;
 const MAX_DESCRIPTION = 1500; // keep in sync with admin/admin.js
 const MAX_MEDIA = 12; // photos/videos per creation, cover included; keep in sync with admin/admin.js
 const MAX_LINK = 300;
+const MAX_FAQ = 30; // keep in sync with admin/admin.js
+const MAX_QUESTION = 200; // keep in sync with admin/admin.js
 // Optional translations of titles, descriptions and category names (title_en, title_de, …); keep in sync with admin/admin.js
 const LANGS = { en: { title: "αγγλικός", name: "αγγλικό", text: "αγγλική" }, de: { title: "γερμανικός", name: "γερμανικό", text: "γερμανική" } };
 // A creation can link to a post about it (the «Δείτε το βίντεο» button); keep in sync with js/main.js
@@ -109,6 +112,7 @@ export default {
         else if (route === "POST /gallery/media") result = await addItemMedia(request, gh);
         else if (route === "PUT /gallery") result = await saveGallery(request, gh);
         else if (route === "PUT /categories") result = await saveCategories(request, gh);
+        else if (route === "PUT /faq") result = await saveFaq(request, gh);
         else if (route === "POST /home/photo") result = await replaceHomePhoto(request, gh);
         else if (route === "GET /stats") result = await getStats(url, env);
         else throw new HttpError(404, "Δεν βρέθηκε.");
@@ -293,12 +297,14 @@ async function requireSession(request, env) {
 }
 
 async function getContent(gh, cfg) {
-  const [gallery, home, categories] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH), readCategories(gh)]);
+  const [gallery, home, categories, faq] = await Promise.all([gh.readJson(GALLERY_PATH), gh.readJson(HOME_PATH), readCategories(gh), readFaq(gh)]);
   return {
     gallery: gallery.data,
     home: home.data,
     categories: categories.data,
     categoriesVersion: categories.sha,
+    faq: faq.data,
+    faqVersion: faq.sha,
     version: versionOf(gallery.sha, home.sha),
     rawBase: `https://raw.githubusercontent.com/${cfg.GITHUB_REPO}/${cfg.GITHUB_BRANCH}/`,
   };
@@ -518,6 +524,45 @@ async function saveCategories(request, gh) {
   return { ok: true, categories: saved.data, categoriesVersion: saved.sha };
 }
 
+/**
+ * Save the «Συχνές ερωτήσεις» at the end of the home page (add, edit, reorder, delete).
+ * Body: { faq: [{ question, answer, question_en?, answer_en?, question_de?, answer_de? }], version }
+ */
+async function saveFaq(request, gh) {
+  const body = await readJson(request);
+  if (!Array.isArray(body.faq)) throw new HttpError(400, "Λάθος δεδομένα.");
+  if (body.faq.length > MAX_FAQ) throw new HttpError(400, `Έως ${MAX_FAQ} ερωτήσεις.`);
+  const current = await readFaq(gh);
+  if (body.version && current.sha && body.version !== current.sha) {
+    throw new HttpError(409, "Έγιναν αλλαγές από άλλη συσκευή. Ανανέωσε τη σελίδα και ξαναδοκίμασε.");
+  }
+  const list = body.faq.map((f, i) => faqTexts(f || {}, i + 1));
+  await gh.commit("Ενημέρωση συχνών ερωτήσεων", [{ path: FAQ_PATH, text: toJson(list) }]);
+  const saved = await readFaq(gh);
+  return { ok: true, faq: saved.data, faqVersion: saved.sha };
+}
+
+/** One question and its answer; the translations are optional and left out when empty */
+function faqTexts(src, n) {
+  const where = `Ερώτηση ${n}`;
+  const question = (lang, word) => {
+    const q = String(src[lang ? "question_" + lang : "question"] || "").replace(/\s+/g, " ").trim();
+    if (q.length > MAX_QUESTION) throw new HttpError(400, `${where}: η ${word}ερώτηση είναι πολύ μεγάλη (έως ${MAX_QUESTION} χαρακτήρες).`);
+    return q;
+  };
+  const out = { question: question("", "") };
+  if (!out.question) throw new HttpError(400, `${where}: γράψε την ερώτηση.`);
+  out.answer = cleanDescription(src.answer, `${where}: η απάντηση`);
+  if (!out.answer) throw new HttpError(400, `${where}: γράψε την απάντηση.`);
+  for (const [lang, word] of Object.entries(LANGS)) {
+    const q = question(lang, word.text + " ");
+    if (q) out["question_" + lang] = q;
+    const a = cleanDescription(src["answer_" + lang], `${where}: η ${word.text} απάντηση`);
+    if (a) out["answer_" + lang] = a;
+  }
+  return out;
+}
+
 /** Replace one of the home page photos. Body: { slot, image (base64) } */
 async function replaceHomePhoto(request, gh) {
   const body = await readJson(request);
@@ -633,6 +678,18 @@ async function readCategories(gh) {
     return { data: data.length ? data : DEFAULT_CATEGORIES, sha: file.sha };
   } catch (err) {
     if (err.github && err.github.status === 404) return { data: DEFAULT_CATEGORIES, sha: "" };
+    throw err;
+  }
+}
+
+/** The questions file, or no questions if it does not exist yet */
+async function readFaq(gh) {
+  try {
+    const file = await gh.readJson(FAQ_PATH);
+    const data = asList(file.data).filter((f) => f && typeof f.question === "string" && typeof f.answer === "string");
+    return { data, sha: file.sha };
+  } catch (err) {
+    if (err.github && err.github.status === 404) return { data: [], sha: "" };
     throw err;
   }
 }

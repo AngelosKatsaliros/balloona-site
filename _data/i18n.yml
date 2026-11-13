@@ -28,6 +28,7 @@ el:
   media_group: Φωτογραφίες και βίντεο της δημιουργίας
   watch_tiktok: Δείτε το βίντεο στο TikTok
   watch_instagram: Δείτε το βίντεο στο Instagram
+  faq_title: Συχνές ερωτήσεις
   form:
     name: Ονοματεπώνυμο
     phone: Τηλέφωνο
@@ -79,6 +80,7 @@ en:
   media_group: Photos and videos of this creation
   watch_tiktok: Watch the video on TikTok
   watch_instagram: Watch the video on Instagram
+  faq_title: Frequently asked questions
   form:
     name: Full name
     phone: Phone
@@ -131,6 +133,7 @@ de:
   media_group: Fotos und Videos dieser Kreation
   watch_tiktok: Video auf TikTok ansehen
   watch_instagram: Video auf Instagram ansehen
+  faq_title: Häufig gestellte Fragen
   form:
     name: Vor- und Nachname
     phone: Telefon
